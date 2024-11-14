@@ -10,6 +10,8 @@ Modules:
 - relativity: Special and general relativity calculations
 - fluids: Fluid dynamics simulations
 - attosecond: Attosecond optics and strong-field physics simulations
+- circuits: Electrical circuit components and simulations
+- em_waves: Electromagnetic wave propagation and simulations
 """
 
 from .mechanics import *
@@ -20,16 +22,24 @@ from .thermodynamics import *
 from .quantum import *
 from .relativity import *
 from .fluids import *
-from .attosecond import StrongFieldSystem, AttosecondPulseGenerator
+from .attosecond import *
+from .circuits import *
+from .em_waves import *
+from .oscillations import *
 
 __all__ = [
-    'Particle',
-    'ElectricField', 'MagneticField', 'GravitationalField', 
+    'Particle', 'Constraint', 'RotationalSpring',
+    'ElectricField', 'MagneticField', 'GravitationalField',
     'Wave', 'WavePacket',
     'ThermalSystem',
     'Wavefunction',
     'LorentzTransform',
     'FluidColumn',
     'StrongFieldSystem',
-    'AttosecondPulseGenerator'
+    'AttosecondPulseGenerator',
+    'Circuit', 'CircuitElement', 'Resistor', 'Capacitor', 'Inductor',
+    'ElectromagneticWave',
+    'HarmonicOscillator', 'CoupledOscillator', 'ParametricOscillator',
+    'DynamicalSystem', 'PhysicalSystem',
+    'RotationalSystem'
 ]
