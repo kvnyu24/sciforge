@@ -1,8 +1,9 @@
 import numpy as np
 from typing import Optional, Union
 from numpy.typing import ArrayLike
+from .base import QuantumSystem
 
-class Wavefunction:
+class Wavefunction(QuantumSystem):
     """Class representing a quantum mechanical wavefunction"""
     
     def __init__(self,
@@ -19,27 +20,10 @@ class Wavefunction:
             mass: Particle mass (default=1)
             hbar: Reduced Planck constant (default=1)
         """
-        self.x = np.array(x)
-        self.mass = mass
-        self.hbar = hbar
-        
-        # Initialize wavefunction
-        if callable(psi0):
-            self.psi = psi0(self.x)
-        else:
-            self.psi = np.array(psi0)
-            
-        # Normalize
-        self._normalize()
+        super().__init__(mass, x, psi0, hbar)
         
         # Store history
         self.history = {'time': [0], 'psi': [self.psi.copy()]}
-        
-    def _normalize(self):
-        """Normalize the wavefunction"""
-        dx = self.x[1] - self.x[0]
-        norm = np.sqrt(np.sum(np.abs(self.psi)**2) * dx)
-        self.psi /= norm
         
     def probability_density(self) -> np.ndarray:
         """Calculate probability density |ψ|²"""
@@ -55,7 +39,7 @@ class Wavefunction:
         Returns:
             Complex expectation value
         """
-        dx = self.x[1] - self.x[0]
+        dx = np.diff(self.position)[0]
         return np.sum(np.conj(self.psi) * operator @ self.psi) * dx
         
     def evolve(self, dt: float, potential: Optional[ArrayLike] = None):
@@ -67,8 +51,8 @@ class Wavefunction:
             potential: Optional potential energy function V(x)
         """
         # Momentum space grid
-        dk = 2 * np.pi / (self.x[-1] - self.x[0])
-        k = np.fft.fftfreq(len(self.x), self.x[1] - self.x[0]) * 2 * np.pi
+        dk = 2 * np.pi / (self.position[-1] - self.position[0])
+        k = np.fft.fftfreq(len(self.position), self.position[1] - self.position[0]) * 2 * np.pi
         
         # Kinetic and potential operators
         T = np.exp(-1j * self.hbar * k**2 * dt / (4 * self.mass))

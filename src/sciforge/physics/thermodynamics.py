@@ -1,8 +1,9 @@
 import numpy as np
 from typing import Optional, List, Dict
 from numpy.typing import ArrayLike
+from .base import ThermodynamicSystem
 
-class ThermalSystem:
+class ThermalSystem(ThermodynamicSystem):
     """Class representing a thermal system with heat transfer capabilities"""
     
     def __init__(self, 
@@ -19,15 +20,16 @@ class ThermalSystem:
             specific_heat: Specific heat capacity in J/(kg·K)
             thermal_conductivity: Thermal conductivity in W/(m·K), optional
         """
-        self.temperature = temperature
-        self.mass = mass
-        self.specific_heat = specific_heat
+        super().__init__(mass=mass,
+                        position=np.array([0.0]),
+                        temperature=temperature,
+                        specific_heat=specific_heat)
         self.thermal_conductivity = thermal_conductivity
         self.history = {'time': [], 'temperature': []}
         
     def heat_energy(self) -> float:
         """Calculate total heat energy of system"""
-        return self.mass * self.specific_heat * self.temperature
+        return self.energy()
     
     def add_heat(self, heat: float):
         """
@@ -36,8 +38,7 @@ class ThermalSystem:
         Args:
             heat: Heat energy to add in Joules
         """
-        delta_t = heat / (self.mass * self.specific_heat)
-        self.temperature += delta_t
+        super().add_heat(heat)
         
     def conductive_heat_transfer(self, 
                                other: 'ThermalSystem',

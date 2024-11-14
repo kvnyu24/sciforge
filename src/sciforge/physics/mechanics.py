@@ -1,12 +1,12 @@
-class Particle:
+import numpy as np
+from .base import DynamicalSystem
+
+class Particle(DynamicalSystem):
     """Classical particle mechanics with advanced integration methods"""
     def __init__(self, mass, position, velocity, drag_coeff=0.0, gravity=9.81):
-        self.mass = mass
-        self.position = position
-        self.velocity = velocity
+        super().__init__(mass, position, velocity)
         self.drag_coeff = drag_coeff
         self.gravity = gravity
-        self.forces = []
         self.history = {'position': [], 'velocity': [], 'acceleration': []}
     
     def update(self, force, dt):

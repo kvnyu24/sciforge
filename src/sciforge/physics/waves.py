@@ -7,16 +7,19 @@ Provides classes for simulating classical waves and wave packets.
 import numpy as np
 from typing import Optional, Union, Tuple
 from numpy.typing import ArrayLike
+from .base import PhysicalSystem
 
 
-class Wave:
+class Wave(PhysicalSystem):
     """Class representing a classical wave"""
     
     def __init__(self, 
                  amplitude: float,
                  wavelength: float,
                  frequency: float,
-                 phase: float = 0.0):
+                 phase: float = 0.0,
+                 position: ArrayLike = np.array([0.0]),
+                 mass: float = 1.0):
         """
         Initialize wave parameters
         
@@ -25,7 +28,10 @@ class Wave:
             wavelength: Wavelength (meters)
             frequency: Frequency (Hz) 
             phase: Initial phase (radians)
+            position: Initial position array
+            mass: Wave mass/energy density
         """
+        super().__init__(mass, position)
         self.amplitude = amplitude
         self.wavelength = wavelength
         self.frequency = frequency
@@ -61,16 +67,17 @@ class Wave:
     
     def energy(self) -> float:
         """Calculate wave energy density"""
-        return 0.5 * self.amplitude**2 * self.angular_freq**2
+        return 0.5 * self.mass * self.amplitude**2 * self.angular_freq**2
 
 
-class WavePacket:
+class WavePacket(PhysicalSystem):
     """Class representing a wave packet (group of waves)"""
     
     def __init__(self,
                  central_wavelength: float,
                  spread: float,
-                 position: float = 0.0):
+                 position: float = 0.0,
+                 mass: float = 1.0):
         """
         Initialize wave packet
         
@@ -78,7 +85,9 @@ class WavePacket:
             central_wavelength: Central wavelength of packet
             spread: Spatial spread of packet
             position: Initial central position
+            mass: Wave packet mass/energy density
         """
+        super().__init__(mass, np.array([position]))
         self.central_wavelength = central_wavelength
         self.spread = spread
         self.position = position
