@@ -1,4 +1,4 @@
-from sciforge.core.base import BaseProcess
+from ..core.base import BaseProcess
 import numpy as np
 
 class PoissonProcess(BaseProcess):

@@ -1,4 +1,4 @@
-from sciforge.core.base import BaseSolver
+from ..core.base import BaseSolver
 import numpy as np
 
 class ODESolver(BaseSolver):

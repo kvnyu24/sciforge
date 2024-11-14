@@ -8,6 +8,7 @@ Modules:
 - thermodynamics: Heat transfer and thermal systems
 - quantum: Basic quantum mechanical systems
 - relativity: Special and general relativity calculations
+- fluids: Fluid dynamics simulations
 """
 
 from .mechanics import *
@@ -16,6 +17,7 @@ from .waves import *
 from .thermodynamics import *
 from .quantum import *
 from .relativity import *
+from .fluids import *
 
 __all__ = [
     'Particle',
@@ -23,5 +25,6 @@ __all__ = [
     'Wave', 'WavePacket',
     'ThermalSystem',
     'Wavefunction',
-    'LorentzTransform'
+    'LorentzTransform',
+    'FluidColumn'
 ]
