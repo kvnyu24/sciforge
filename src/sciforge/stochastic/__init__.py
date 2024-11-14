@@ -2,4 +2,4 @@
 Stochastic processes module
 """
 
-from .processes import WienerProcess, OrnsteinUhlenbeck 
+from .processes import *

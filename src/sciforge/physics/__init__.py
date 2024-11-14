@@ -10,16 +10,16 @@ Modules:
 - relativity: Special and general relativity calculations
 """
 
-from .mechanics import Particle
-from .fields import ElectricField, MagneticField, GravitationalField
-from .waves import Wave, WavePacket
-from .thermodynamics import ThermalSystem
-from .quantum import Wavefunction
-from .relativity import LorentzTransform
+from .mechanics import *
+from .fields import *
+from .waves import *
+from .thermodynamics import *
+from .quantum import *
+from .relativity import *
 
 __all__ = [
     'Particle',
-    'ElectricField', 'MagneticField', 'GravitationalField',
+    'ElectricField', 'MagneticField', 'GravitationalField', 
     'Wave', 'WavePacket',
     'ThermalSystem',
     'Wavefunction',

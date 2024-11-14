@@ -2,4 +2,4 @@
 Differential equations solvers module
 """
 
-from .ode import ODESolver, RungeKutta4 
+from .ode import *
