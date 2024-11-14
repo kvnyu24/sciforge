@@ -29,18 +29,16 @@ class Wavefunction(QuantumSystem):
         """Calculate probability density |ψ|²"""
         return np.abs(self.psi)**2
         
-    def expectation_value(self, operator: np.ndarray) -> complex:
-        """
-        Calculate expectation value <ψ|A|ψ>
+    def expectation_value(self, operator: np.ndarray) -> float:
+        """Calculate quantum expectation value of an operator
         
         Args:
-            operator: Quantum operator matrix
+            operator: Array representing the quantum operator
             
         Returns:
-            Complex expectation value
+            float: Expectation value <ψ|A|ψ>
         """
-        dx = np.diff(self.position)[0]
-        return np.sum(np.conj(self.psi) * operator @ self.psi) * dx
+        return np.sum(np.conjugate(self.psi) * operator * self.psi).real
         
     def evolve(self, dt: float, potential: Optional[ArrayLike] = None):
         """

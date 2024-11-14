@@ -9,6 +9,7 @@ Modules:
 - quantum: Basic quantum mechanical systems
 - relativity: Special and general relativity calculations
 - fluids: Fluid dynamics simulations
+- attosecond: Attosecond optics and strong-field physics simulations
 """
 
 from .mechanics import *
@@ -18,6 +19,7 @@ from .thermodynamics import *
 from .quantum import *
 from .relativity import *
 from .fluids import *
+from .attosecond import StrongFieldSystem, AttosecondPulseGenerator
 
 __all__ = [
     'Particle',
@@ -26,5 +28,7 @@ __all__ = [
     'ThermalSystem',
     'Wavefunction',
     'LorentzTransform',
-    'FluidColumn'
+    'FluidColumn',
+    'StrongFieldSystem',
+    'AttosecondPulseGenerator'
 ]
