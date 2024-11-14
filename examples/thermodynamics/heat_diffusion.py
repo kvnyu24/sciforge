@@ -46,8 +46,8 @@ def solve_heat_equation_1d(
         
     # Initialize arrays
     nx = len(T0)
-    nt = int(total_time / dt)
-    T = np.zeros((nt, nx))
+    nt = int(total_time / dt) + 1  # Add +1 to include the initial time
+    T = np.zeros((nt, nx))  # Change array initialization to include time steps
     T[0] = T0
     
     # Time stepping
