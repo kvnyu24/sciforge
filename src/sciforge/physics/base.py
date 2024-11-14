@@ -46,20 +46,34 @@ class DynamicalSystem(PhysicalSystem):
         """Calculate total force on system"""
         return sum(f(self.position, self.velocity, self.time) 
                   for f in self.forces)
+    
+class Force(BaseClass):
+    """Base class for forces in mechanical systems"""
+    def __call__(self, position: ArrayLike, velocity: Optional[ArrayLike] = None, 
+                time: Optional[float] = None) -> np.ndarray:
+        """Calculate force at given position, velocity and time"""
+        raise NotImplementedError
 
-class ConservativeField(BaseClass):
-    """Base class for conservative force fields"""
+class Field(BaseClass):
+    """Base class for all physical fields"""
     def __init__(self, strength: float):
         super().__init__()
         self.strength = strength
-        
+
+    def field(self, position: ArrayLike) -> np.ndarray:
+        """Calculate field vector at position"""
+        raise NotImplementedError
+
+class ConservativeField(Field):
+    """Base class for conservative force fields"""
     def potential(self, position: ArrayLike) -> float:
         """Calculate potential energy at position"""
         raise NotImplementedError
         
     def force(self, position: ArrayLike) -> np.ndarray:
-        """Calculate force at position"""
-        raise NotImplementedError
+        """Calculate force at position (negative gradient of potential)"""
+        r = np.array(position)
+        return -self.field(r)
 
 class QuantumSystem(PhysicalSystem):
     """Base class for quantum mechanical systems"""
@@ -109,3 +123,27 @@ class ThermodynamicSystem(PhysicalSystem):
         """Add heat to system"""
         self.temperature += dQ / (self.mass * self.specific_heat)
         self._energy += dQ 
+
+
+class GravitationalSystem(BaseClass):
+    """Universal gravitation between multiple bodies"""
+    def __init__(self, G: float = 6.67430e-11):
+        super().__init__()
+        self.G = G
+        self.bodies = []
+        
+    def add_body(self, mass: float, position: np.ndarray, velocity: np.ndarray):
+        """Add a body to the gravitational system"""
+        self.bodies.append({'mass': mass, 'position': position, 'velocity': velocity})
+        
+    def force_on_body(self, body_idx: int) -> np.ndarray:
+        """Calculate net gravitational force on a specific body"""
+        total_force = np.zeros(3)
+        for i, other in enumerate(self.bodies):
+            if i == body_idx:
+                continue
+            r = other['position'] - self.bodies[body_idx]['position']
+            r_mag = np.linalg.norm(r)
+            force_mag = self.G * self.bodies[body_idx]['mass'] * other['mass'] / (r_mag**2)
+            total_force += force_mag * r / r_mag
+        return total_force

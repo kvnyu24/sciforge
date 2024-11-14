@@ -13,6 +13,7 @@ Modules:
 """
 
 from .mechanics import *
+from .forces import *
 from .fields import *
 from .waves import *
 from .thermodynamics import *
