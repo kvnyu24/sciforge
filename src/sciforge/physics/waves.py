@@ -114,3 +114,103 @@ class WavePacket(PhysicalSystem):
         carrier = np.exp(1j * (self.k0 * x - self.k0 * v_g * t))
         
         return envelope * carrier
+
+
+class StandingWave(Wave):
+    """Class representing a standing wave"""
+    
+    def __init__(self,
+                 amplitude: float,
+                 wavelength: float,
+                 frequency: float,
+                 length: float,
+                 mode: int = 1,
+                 phase: float = 0.0,
+                 position: ArrayLike = np.array([0.0]),
+                 mass: float = 1.0):
+        """
+        Initialize standing wave
+        
+        Args:
+            amplitude: Wave amplitude
+            wavelength: Wavelength (meters)
+            frequency: Frequency (Hz)
+            length: Length of medium
+            mode: Mode number (1, 2, 3, ...)
+            phase: Initial phase (radians)
+            position: Initial position array
+            mass: Wave mass/energy density
+        """
+        super().__init__(amplitude, wavelength, frequency, phase, position, mass)
+        self.length = length
+        self.mode = mode
+        
+    def displacement(self, x: ArrayLike, t: float) -> np.ndarray:
+        """Calculate standing wave displacement"""
+        return 2 * self.amplitude * np.sin(self.mode * np.pi * x / self.length) * np.cos(self.angular_freq * t)
+
+
+class DampedWave(Wave):
+    """Class representing a damped wave"""
+    
+    def __init__(self,
+                 amplitude: float,
+                 wavelength: float,
+                 frequency: float,
+                 damping: float,
+                 phase: float = 0.0,
+                 position: ArrayLike = np.array([0.0]),
+                 mass: float = 1.0):
+        """
+        Initialize damped wave
+        
+        Args:
+            amplitude: Initial amplitude
+            wavelength: Wavelength (meters)
+            frequency: Frequency (Hz)
+            damping: Damping coefficient
+            phase: Initial phase (radians)
+            position: Initial position array
+            mass: Wave mass/energy density
+        """
+        super().__init__(amplitude, wavelength, frequency, phase, position, mass)
+        self.damping = damping
+        
+    def displacement(self, x: ArrayLike, t: float) -> np.ndarray:
+        """Calculate damped wave displacement"""
+        return self.amplitude * np.exp(-self.damping * t) * np.sin(self.wavenumber * x - self.angular_freq * t + self.phase)
+
+
+class ShockWave(Wave):
+    """Class representing a shock wave"""
+    
+    def __init__(self,
+                 amplitude: float,
+                 wavelength: float,
+                 frequency: float,
+                 shock_speed: float,
+                 phase: float = 0.0,
+                 position: ArrayLike = np.array([0.0]),
+                 mass: float = 1.0):
+        """
+        Initialize shock wave
+        
+        Args:
+            amplitude: Wave amplitude
+            wavelength: Wavelength (meters)
+            frequency: Frequency (Hz)
+            shock_speed: Propagation speed of shock front
+            phase: Initial phase (radians)
+            position: Initial position array
+            mass: Wave mass/energy density
+        """
+        super().__init__(amplitude, wavelength, frequency, phase, position, mass)
+        self.shock_speed = shock_speed
+        
+    def displacement(self, x: ArrayLike, t: float) -> np.ndarray:
+        """Calculate shock wave displacement with discontinuous front"""
+        shock_front = self.shock_speed * t
+        wave = np.where(x <= shock_front,
+                       self.amplitude * np.sin(self.wavenumber * x - self.angular_freq * t + self.phase),
+                       0)
+        return wave

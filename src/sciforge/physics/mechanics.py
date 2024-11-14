@@ -47,3 +47,94 @@ class Particle(DynamicalSystem):
         self.history['position'].append(self.position.copy())
         self.history['velocity'].append(self.velocity.copy())
         self.history['acceleration'].append(k1v.copy())
+
+class Spring:
+    """Simple harmonic oscillator with spring force"""
+    def __init__(self, k: float, rest_length: float = 0.0):
+        self.k = k  # Spring constant
+        self.rest_length = rest_length
+        
+    def force(self, displacement: np.ndarray) -> np.ndarray:
+        """Calculate spring force F = -kx"""
+        stretch = np.linalg.norm(displacement) - self.rest_length
+        return -self.k * stretch * displacement / np.linalg.norm(displacement)
+
+class RigidBody(DynamicalSystem):
+    """Rigid body dynamics with rotational motion"""
+    def __init__(self, mass: float, position: np.ndarray, velocity: np.ndarray,
+                 inertia_tensor: np.ndarray, orientation: np.ndarray = None,
+                 angular_velocity: np.ndarray = None):
+        super().__init__(mass, position, velocity)
+        self.I = inertia_tensor
+        self.orientation = np.eye(3) if orientation is None else orientation
+        self.angular_velocity = np.zeros(3) if angular_velocity is None else angular_velocity
+        self.history = {
+            'position': [], 'velocity': [], 'acceleration': [],
+            'orientation': [], 'angular_velocity': [], 'angular_acceleration': []
+        }
+    
+    def update(self, force: np.ndarray, torque: np.ndarray, dt: float):
+        """Update rigid body state with translational and rotational motion"""
+        # Translational motion
+        acceleration = force / self.mass
+        self.velocity += acceleration * dt
+        self.position += self.velocity * dt
+        
+        # Rotational motion
+        angular_acceleration = np.linalg.inv(self.I) @ (
+            torque - np.cross(self.angular_velocity, self.I @ self.angular_velocity)
+        )
+        self.angular_velocity += angular_acceleration * dt
+        
+        # Update orientation using rotation matrix
+        omega_matrix = np.array([
+            [0, -self.angular_velocity[2], self.angular_velocity[1]],
+            [self.angular_velocity[2], 0, -self.angular_velocity[0]],
+            [-self.angular_velocity[1], self.angular_velocity[0], 0]
+        ])
+        self.orientation += omega_matrix @ self.orientation * dt
+        
+        # Store history
+        self.history['position'].append(self.position.copy())
+        self.history['velocity'].append(self.velocity.copy())
+        self.history['acceleration'].append(acceleration.copy())
+        self.history['orientation'].append(self.orientation.copy())
+        self.history['angular_velocity'].append(self.angular_velocity.copy())
+        self.history['angular_acceleration'].append(angular_acceleration.copy())
+
+class Pendulum(DynamicalSystem):
+    """Simple and double pendulum dynamics"""
+    def __init__(self, mass: float, length: float, theta0: float, omega0: float = 0.0,
+                 gravity: float = 9.81, damping: float = 0.0):
+        position = np.array([length * np.sin(theta0), -length * np.cos(theta0)])
+        velocity = np.array([length * omega0 * np.cos(theta0), length * omega0 * np.sin(theta0)])
+        super().__init__(mass, position, velocity)
+        self.length = length
+        self.theta = theta0
+        self.omega = omega0
+        self.gravity = gravity
+        self.damping = damping
+        self.history = {'theta': [theta0], 'omega': [omega0]}
+    
+    def update(self, dt: float):
+        """Update pendulum state using semi-implicit Euler method"""
+        # Calculate acceleration
+        alpha = (-self.gravity/self.length * np.sin(self.theta) - 
+                self.damping * self.omega)
+        
+        # Update state
+        self.omega += alpha * dt
+        self.theta += self.omega * dt
+        
+        # Update position and velocity
+        self.position[0] = self.length * np.sin(self.theta)
+        self.position[1] = -self.length * np.cos(self.theta)
+        self.velocity[0] = self.length * self.omega * np.cos(self.theta)
+        self.velocity[1] = self.length * self.omega * np.sin(self.theta)
+        
+        # Store history
+        self.history['theta'].append(self.theta)
+        self.history['omega'].append(self.omega)
+
+
+        
