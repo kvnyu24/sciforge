@@ -1,5 +1,6 @@
 from ..core.base import BaseProcess
 import numpy as np
+from typing import Callable, Union, Optional, Tuple, Dict
 
 class PoissonProcess(BaseProcess):
     """Implements Poisson process"""
@@ -134,3 +135,102 @@ class VasicekModel(BaseProcess):
             dW = np.random.normal(0, np.sqrt(dt))
             r[i] = r[i-1] + kappa*(theta - r[i-1])*dt + sigma*dW
         return t, r
+
+class MetropolisHastings(BaseProcess):
+    """
+    Implements the Metropolis-Hastings algorithm for MCMC sampling.
+    """
+    
+    def __init__(self, 
+                 log_likelihood: Callable,
+                 proposal: Callable,
+                 initial_state: Union[np.ndarray, Dict],
+                 seed: Optional[int] = None):
+        """
+        Initialize Metropolis-Hastings sampler
+        
+        Args:
+            log_likelihood: Log likelihood function to evaluate states
+            proposal: Function to generate proposal states
+            initial_state: Initial state of the chain
+            seed: Random seed for reproducibility
+        """
+        super().__init__(seed)
+        self.log_likelihood = log_likelihood
+        self.proposal = proposal
+        self.state = initial_state
+        self.history = {'states': [initial_state], 'log_likelihoods': []}
+        
+    def step(self, beta: float = 1.0) -> Tuple[Union[np.ndarray, Dict], float]:
+        """
+        Perform one step of the Metropolis-Hastings algorithm
+        
+        Args:
+            beta: Inverse temperature parameter for simulated annealing
+            
+        Returns:
+            Tuple of (new state, log likelihood)
+        """
+        # Generate proposal
+        proposed_state = self.proposal(self.state)
+        
+        # Calculate log likelihoods
+        current_ll = self.log_likelihood(self.state)
+        proposed_ll = self.log_likelihood(proposed_state)
+        
+        # Calculate acceptance probability
+        log_ratio = beta * (proposed_ll - current_ll)
+        accept_prob = np.exp(min(0, log_ratio))
+        
+        # Accept or reject
+        if self.rng.random() < accept_prob:
+            self.state = proposed_state
+            current_ll = proposed_ll
+            
+        # Update history
+        self.history['states'].append(self.state)
+        self.history['log_likelihoods'].append(current_ll)
+        
+        return self.state, current_ll
+        
+    def run(self,
+            n_steps: int,
+            beta: float = 1.0,
+            cooling_rate: float = 0.0,
+            early_stop: Optional[int] = None) -> Tuple[Union[np.ndarray, Dict], float]:
+        """
+        Run the Metropolis-Hastings chain
+        
+        Args:
+            n_steps: Number of steps to run
+            beta: Initial inverse temperature
+            cooling_rate: Rate of temperature decrease
+            early_stop: Early stopping threshold for no improvement
+            
+        Returns:
+            Tuple of (best state, best log likelihood)
+        """
+        best_state = self.state
+        best_ll = self.log_likelihood(self.state)
+        no_improve = 0
+        
+        for i in range(n_steps):
+            # Update state
+            state, ll = self.step(beta)
+            
+            # Update best state
+            if ll > best_ll:
+                best_state = state
+                best_ll = ll
+                no_improve = 0
+            else:
+                no_improve += 1
+                
+            # Check early stopping
+            if early_stop and no_improve >= early_stop:
+                break
+                
+            # Update temperature
+            beta += cooling_rate
+            
+        return best_state, best_ll
