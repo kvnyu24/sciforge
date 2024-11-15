@@ -26,6 +26,7 @@ from .attosecond import *
 from .circuits import *
 from .em_waves import *
 from .oscillations import *
+from .statistical import HermitePolynomial, RiceDistribution
 
 __all__ = [
     'Particle', 'Constraint', 'RotationalSpring',
@@ -41,5 +42,6 @@ __all__ = [
     'ElectromagneticWave',
     'HarmonicOscillator', 'CoupledOscillator', 'ParametricOscillator',
     'DynamicalSystem', 'PhysicalSystem',
-    'RotationalSystem'
+    'RotationalSystem',
+    'HermitePolynomial', 'RiceDistribution'
 ]
