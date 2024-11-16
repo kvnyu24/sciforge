@@ -10,7 +10,8 @@ class ThermalSystem(ThermodynamicSystem):
                  temperature: float,
                  mass: float,
                  specific_heat: float,
-                 thermal_conductivity: Optional[float] = None):
+                 thermal_conductivity: Optional[float] = None,
+                 surface_area: Optional[float] = None):
         """
         Initialize thermal system
         
@@ -19,12 +20,14 @@ class ThermalSystem(ThermodynamicSystem):
             mass: Mass of system in kg
             specific_heat: Specific heat capacity in J/(kg·K)
             thermal_conductivity: Thermal conductivity in W/(m·K), optional
+            surface_area: Surface area in m², optional
         """
         super().__init__(mass=mass,
                         position=np.array([0.0]),
                         temperature=temperature,
                         specific_heat=specific_heat)
         self.thermal_conductivity = thermal_conductivity
+        self.surface_area = surface_area
         self.history = {'time': [], 'temperature': []}
         
     def heat_energy(self) -> float:
