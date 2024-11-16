@@ -26,7 +26,7 @@ from matplotlib.animation import FuncAnimation
 from src.sciforge.physics import ThermalSystem
 from matplotlib.patches import Arrow, Circle, FancyArrowPatch
 from matplotlib import colors
-from scipy.integrate import solve_ivp
+from src.sciforge.differential.ode import IVPSolver
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.gridspec as gridspec
 from matplotlib.colors import LinearSegmentedColormap
@@ -122,31 +122,21 @@ def differential_equations(t, y, systems, ambient_temp, air_flow_base, contact_a
     return np.array([dT1, dT2, dT3])
 
 def solve_temperature_evolution(systems, t_span, t_eval, ambient_temp, air_flow_base):
-    """Solve temperature evolution using differential equation solver
-    
-    Args:
-        systems: List of ThermalSystem objects
-        t_span: Time span [t_start, t_end]
-        t_eval: Times at which to evaluate solution
-        ambient_temp: Base ambient temperature
-        air_flow_base: Base air flow rate
-        
-    Returns:
-        Solution object from solve_ivp
-    """
+    """Solve temperature evolution using differential equation solver"""
     y0 = np.array([sys.temperature for sys in systems], dtype=float)
     contact_area_base = 0.01
     
-    solution = solve_ivp(
+    solver = IVPSolver(method='RK45', rtol=1e-8, atol=1e-8)
+    solution = solver.solve(
         fun=lambda t, y: differential_equations(t, y, systems, ambient_temp, 
                                              air_flow_base, contact_area_base),
         t_span=t_span,
         y0=y0,
-        t_eval=t_eval,
-        method='RK45',
-        rtol=1e-8,
-        atol=1e-8
+        t_eval=t_eval
     )
+    
+    # Ensure solution.y is transposed to match expected shape
+    solution.y = solution.y.T
     
     return solution
 
@@ -191,7 +181,7 @@ def simulate_heat_dissipation():
                                         ambient_temp, air_flow_base)
     
     times = solution.t
-    temps1, temps2, temps3 = solution.y
+    temps1, temps2, temps3 = solution.y[0], solution.y[1], solution.y[2]
     
     # Initialize energy tracking
     total_initial_energy = sum(sys.mass * sys.specific_heat * sys.temperature 

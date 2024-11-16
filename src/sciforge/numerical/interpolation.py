@@ -41,7 +41,7 @@ def linear_interp(x: Sequence[float], y: Sequence[float]) -> Callable[[float], f
     return interpolate
 
 def cubic_spline(x: Sequence[float], y: Sequence[float], 
-                 bc_type: str = 'natural') -> Callable[[float], float]:
+                bc_type: str = 'natural') -> Callable[[Union[float, np.ndarray]], Union[float, np.ndarray]]:
     """
     Cubic spline interpolation between data points.
     
@@ -91,11 +91,16 @@ def cubic_spline(x: Sequence[float], y: Sequence[float],
     # Solve for second derivatives
     c = np.linalg.solve(A, b)
     
-    def interpolate(x_new: float) -> float:
-        if x_new < x[0] or x_new > x[-1]:
+    def interpolate(x_new: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+        x_new = np.asarray(x_new)
+        scalar_input = x_new.ndim == 0
+        x_new = np.atleast_1d(x_new)
+        
+        # Check bounds
+        if np.any(x_new < x[0]) or np.any(x_new > x[-1]):
             raise ValueError("x_new must be within bounds of original data")
             
-        # Find interval
+        # Find intervals
         idx = np.searchsorted(x, x_new) - 1
         idx = np.clip(idx, 0, len(x)-2)
         
@@ -109,6 +114,8 @@ def cubic_spline(x: Sequence[float], y: Sequence[float],
         d = (c[idx+1] - c[idx])/(6*h_i)
         
         # Evaluate cubic polynomial
-        return a + b*dx + c_i*dx**2 + d*dx**3
+        result = a + b*dx + c_i*dx**2 + d*dx**3
+        
+        return float(result) if scalar_input else result
         
     return interpolate

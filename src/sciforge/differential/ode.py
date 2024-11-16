@@ -1,4 +1,5 @@
 from ..core.base import BaseSolver
+from ..numerical.interpolation import cubic_spline
 import numpy as np
 
 class ODESolver(BaseSolver):
@@ -218,3 +219,162 @@ class AdaptiveRK45(ODESolver):
                 dt = tf - t[-1]
                 
         return np.array(t), np.array(y)
+
+class IVPSolver(ODESolver):
+    """Initial Value Problem solver with adaptive step size control"""
+    
+    def __init__(self, method='RK45', rtol=1e-3, atol=1e-6, max_step=np.inf,
+                 first_step=None, store_history=True):
+        """
+        Initialize IVP solver
+        
+        Args:
+            method: Integration method ('RK45', 'RK23', 'DOP853', etc.)
+            rtol: Relative tolerance
+            atol: Absolute tolerance
+            max_step: Maximum allowed step size
+            first_step: Initial step size (estimated if None)
+            store_history: Whether to store solution history
+        """
+        super().__init__(store_history)
+        self.method = method
+        self.rtol = rtol
+        self.atol = atol
+        self.max_step = max_step
+        self.first_step = first_step
+        
+    def _estimate_first_step(self, fun, t0, y0, direction):
+        """Estimate initial step size using RK error estimator"""
+        if self.first_step is not None:
+            return self.first_step
+            
+        scale = self.atol + np.abs(y0) * self.rtol
+        f0 = fun(t0, y0)
+        error_norm = np.linalg.norm(f0 / scale)
+        
+        if error_norm < 1e-10:
+            h0 = 1e-6
+        else:
+            h0 = 0.01 * error_norm
+            
+        return h0 * direction
+        
+    def _rk_step(self, fun, t, y, h):
+        """Perform single RK step with error estimate"""
+        # Butcher tableau for RK45 (Cash-Karp)
+        a = np.array([
+            [0, 0, 0, 0, 0],
+            [1/5, 0, 0, 0, 0],
+            [3/40, 9/40, 0, 0, 0],
+            [3/10, -9/10, 6/5, 0, 0],
+            [-11/54, 5/2, -70/27, 35/27, 0],
+            [1631/55296, 175/512, 575/13824, 44275/110592, 253/4096]
+        ])
+        
+        c = np.array([0, 1/5, 3/10, 3/5, 1, 7/8])
+        b = np.array([37/378, 0, 250/621, 125/594, 0, 512/1771])
+        b_star = np.array([2825/27648, 0, 18575/48384, 13525/55296, 277/14336, 1/4])
+        
+        # Calculate RK stages
+        k = np.zeros((6, len(y)))
+        k[0] = fun(t, y)
+        
+        for i in range(1, 6):
+            yi = y + h * sum(a[i,j] * k[j] for j in range(i))
+            k[i] = fun(t + c[i] * h, yi)
+            
+        # Calculate solutions
+        y_new = y + h * sum(b[i] * k[i] for i in range(6))
+        y_error = h * sum((b[i] - b_star[i]) * k[i] for i in range(6))
+        
+        return y_new, y_error
+        
+    def solve(self, fun, t_span, y0, t_eval=None):
+        """
+        Solve initial value problem
+        
+        Args:
+            fun: Right-hand side of dy/dt = f(t,y)
+            t_span: Tuple of (t0, tf)
+            y0: Initial state
+            t_eval: Times at which to store the solution
+            
+        Returns:
+            Solution object containing results
+        """
+        t0, tf = t_span
+        direction = 1 if tf > t0 else -1
+        
+        if t_eval is None:
+            t_eval = np.array([t0, tf])
+        
+        # Initialize solution storage
+        t = [t0]
+        y = [np.array(y0)]
+        
+        # Get initial step size
+        h = self._estimate_first_step(fun, t0, y0, direction)
+        
+        # Main integration loop
+        current_t = t0
+        current_y = np.array(y0)
+        
+        while (direction * (tf - current_t) > 0):
+            if direction * (current_t + h - tf) > 0:
+                h = tf - current_t
+                
+            # Take step with error control
+            y_new, error = self._rk_step(fun, current_t, current_y, h)
+            
+            # Error estimation and step size control
+            scale = self.atol + np.maximum(np.abs(current_y), np.abs(y_new)) * self.rtol
+            error_norm = np.linalg.norm(error / scale) / np.sqrt(len(y0))
+            
+            if error_norm < 1:
+                # Step accepted
+                current_t += h
+                current_y = y_new
+                
+                # Store results
+                t.append(current_t)
+                y.append(current_y)
+                
+                # Update step size
+                if error_norm < 0.1:
+                    h *= min(10, 0.9 / error_norm ** 0.2)
+                else:
+                    h *= 0.9 / error_norm ** 0.2
+                    
+            else:
+                # Reject step and reduce step size
+                h *= max(0.1, 0.9 / error_norm ** 0.2)
+                
+            h = min(abs(h), self.max_step) * direction
+            
+        # Interpolate to get solution at requested times
+        t = np.array(t)
+        y = np.array(y)
+        
+        if self.store_history:
+            self.save_state(t, y)
+            
+        return Solution(t, y, t_eval)
+
+class Solution:
+    """Container for ODE solution"""
+    def __init__(self, t, y, t_eval):
+        self.t = t
+        self.y = y
+        self.t_eval = t_eval
+        self._interpolate()
+        
+    def _interpolate(self):
+        """Interpolate solution to evaluation points"""
+        
+        # Interpolate each component
+        y_components = []
+        for i in range(self.y.shape[1]):
+            spline = cubic_spline(self.t, self.y[:,i])
+            y_components.append(spline(self.t_eval))
+            
+        self.y_eval = np.array(y_components).T
