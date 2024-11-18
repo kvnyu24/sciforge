@@ -4,3 +4,4 @@ matplotlib>=3.4.0
 pytest>=6.0.0
 sphinx>=4.0.0
 black>=21.0 
+setuptools>=65.5.0
