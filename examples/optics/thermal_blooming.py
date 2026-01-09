@@ -151,13 +151,48 @@ def plot_results(beam):
     plt.tight_layout()
     return anim
 
+def plot_static_results(beam):
+    """Create static visualization of thermal blooming evolution"""
+    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
+
+    # Plot intensity and temperature at different time steps
+    n_frames = len(beam.history['intensity'])
+    frames_to_plot = [0, n_frames//4, n_frames-1]
+
+    for idx, frame in enumerate(frames_to_plot):
+        ax = axes[0, idx]
+        im = ax.pcolormesh(beam.X * 100, beam.Y * 100,
+                          beam.history['intensity'][frame],
+                          shading='auto', cmap='hot')
+        ax.set_xlabel('x (cm)')
+        ax.set_ylabel('y (cm)')
+        ax.set_title(f'Intensity at t = {frame*1e-3:.1f} ms')
+        plt.colorbar(im, ax=ax)
+
+    for idx, frame in enumerate(frames_to_plot):
+        ax = axes[1, idx]
+        im = ax.pcolormesh(beam.X * 100, beam.Y * 100,
+                          beam.history['temperature'][frame] - 273.15,
+                          shading='auto', cmap='plasma')
+        ax.set_xlabel('x (cm)')
+        ax.set_ylabel('y (cm)')
+        ax.set_title(f'Temperature at t = {frame*1e-3:.1f} ms (°C)')
+        plt.colorbar(im, ax=ax)
+
+    plt.tight_layout()
+
 def main():
     # Run simulation
     beam = simulate_thermal_blooming()
-    
-    # Create animation
-    anim = plot_results(beam)
-    plt.show()
+
+    # Create static plot for saving
+    plot_static_results(beam)
+
+    # Save plot to output directory
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output')
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, 'thermal_blooming.png'), dpi=150, bbox_inches='tight')
+    print(f"Plot saved to {os.path.join(output_dir, 'thermal_blooming.png')}")
 
 if __name__ == "__main__":
     main()

@@ -134,10 +134,15 @@ def plot_results(x, t, T):
 def main():
     # Run simulation
     x, t, T = simulate_heat_diffusion()
-    
+
     # Plot results
     plot_results(x, t, T)
-    plt.show()
+
+    # Save plot to output directory
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output')
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, 'heat_diffusion.png'), dpi=150, bbox_inches='tight')
+    print(f"Plot saved to {os.path.join(output_dir, 'heat_diffusion.png')}")
 
 if __name__ == "__main__":
     main() 

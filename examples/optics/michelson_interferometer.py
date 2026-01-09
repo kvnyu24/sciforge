@@ -336,12 +336,82 @@ def plot_results(interferometer):
     plt.tight_layout()
     plt.show()
 
+def plot_static_results(interferometer):
+    """Create static visualization of interference patterns and dynamics"""
+    fig = plt.figure(figsize=(16, 12))
+
+    # Create subplot grid
+    gs = plt.GridSpec(2, 3, figure=fig)
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax3 = fig.add_subplot(gs[0, 2])
+    ax4 = fig.add_subplot(gs[1, 0])
+    ax5 = fig.add_subplot(gs[1, 1])
+    ax6 = fig.add_subplot(gs[1, 2], projection='3d')
+
+    times = np.arange(len(interferometer.history['pattern']))
+
+    # Main interference pattern (final state)
+    final_idx = -1
+    im = ax1.pcolormesh(interferometer.X*1e3, interferometer.Y*1e3,
+                        interferometer.history['pattern'][final_idx],
+                        shading='gouraud', cmap='inferno')
+    plt.colorbar(im, ax=ax1, label='Intensity (arb. units)')
+    ax1.set_title('Final Interference Pattern')
+    ax1.set_xlabel('x (mm)')
+    ax1.set_ylabel('y (mm)')
+
+    # Fringe visibility over time
+    ax2.plot(times, interferometer.history['visibility'], 'c-', lw=2)
+    ax2.set_title('Fringe Visibility')
+    ax2.set_xlabel('Time (ms)')
+    ax2.set_ylabel('Visibility')
+    ax2.grid(True, alpha=0.3)
+
+    # Path length difference
+    ax3.plot(times, np.array(interferometer.history['phase_difference'])*1e9, 'r-', lw=2)
+    ax3.set_title('Path Length Difference')
+    ax3.set_xlabel('Time (ms)')
+    ax3.set_ylabel('Path Difference (nm)')
+    ax3.grid(True, alpha=0.3)
+
+    # Coherence factor
+    ax4.plot(times, interferometer.history['coherence'], 'g-', lw=2)
+    ax4.set_title('Coherence Factor')
+    ax4.set_xlabel('Time (ms)')
+    ax4.set_ylabel('Coherence')
+    ax4.grid(True, alpha=0.3)
+
+    # Temperature
+    ax5.plot(times, interferometer.history['temperature'], 'y-', lw=2)
+    ax5.set_title('Temperature')
+    ax5.set_xlabel('Time (ms)')
+    ax5.set_ylabel('Temperature (K)')
+    ax5.grid(True, alpha=0.3)
+
+    # 3D intensity distribution
+    ax6.plot_surface(interferometer.X*1e3, interferometer.Y*1e3,
+                    interferometer.history['pattern'][final_idx],
+                    cmap='plasma', linewidth=0)
+    ax6.set_title('3D Intensity Distribution')
+    ax6.set_xlabel('x (mm)')
+    ax6.set_ylabel('y (mm)')
+    ax6.set_zlabel('Intensity')
+
+    plt.tight_layout()
+
 def main():
     # Run simulation
     interferometer = simulate_michelson()
-    
-    # Create animated plots
-    plot_results(interferometer)
+
+    # Create static plots for saving
+    plot_static_results(interferometer)
+
+    # Save plot to output directory
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output')
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, 'michelson_interferometer.png'), dpi=150, bbox_inches='tight')
+    print(f"Plot saved to {os.path.join(output_dir, 'michelson_interferometer.png')}")
 
 if __name__ == "__main__":
     main()

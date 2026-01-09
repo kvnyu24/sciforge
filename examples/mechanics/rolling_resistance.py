@@ -117,10 +117,15 @@ def plot_results(times, positions, velocities, energies):
 def main():
     # Run simulation
     times, positions, velocities, energies = simulate_rolling()
-    
+
     # Plot results
     plot_results(times, positions, velocities, energies)
-    plt.show()
+
+    # Save plot to output directory
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output')
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, 'rolling_resistance.png'), dpi=150, bbox_inches='tight')
+    print(f"Plot saved to {os.path.join(output_dir, 'rolling_resistance.png')}")
 
 if __name__ == "__main__":
     main() 

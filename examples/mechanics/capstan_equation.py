@@ -190,10 +190,15 @@ def plot_parameter_sensitivity(ax, system):
 def main():
     # Run simulation
     system = simulate_capstan()
-    
+
     # Plot results
     plot_results(system)
-    plt.show()
+
+    # Save plot to output directory
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output')
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, 'capstan_equation.png'), dpi=150, bbox_inches='tight')
+    print(f"Plot saved to {os.path.join(output_dir, 'capstan_equation.png')}")
 
 if __name__ == "__main__":
     main() 

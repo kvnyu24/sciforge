@@ -79,10 +79,15 @@ def plot_results(hhg, t_as, attosecond_field):
 def main():
     # Run simulation
     hhg, t_as, attosecond_field = simulate_hhg()
-    
+
     # Plot results
     plot_results(hhg, t_as, attosecond_field)
-    plt.show()
+
+    # Save plot to output directory
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output')
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, 'attosecond_generation.png'), dpi=150, bbox_inches='tight')
+    print(f"Plot saved to {os.path.join(output_dir, 'attosecond_generation.png')}")
 
 if __name__ == "__main__":
     main()

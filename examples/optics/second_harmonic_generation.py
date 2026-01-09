@@ -116,10 +116,15 @@ def plot_results(crystal):
 def main():
     # Run simulation
     crystal = simulate_shg()
-    
+
     # Plot results
     plot_results(crystal)
-    plt.show()
+
+    # Save plot to output directory
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output')
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, 'second_harmonic_generation.png'), dpi=150, bbox_inches='tight')
+    print(f"Plot saved to {os.path.join(output_dir, 'second_harmonic_generation.png')}")
 
 if __name__ == "__main__":
     main() 

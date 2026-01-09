@@ -76,10 +76,15 @@ def plot_results(x, y, pattern1, pattern2, moire):
 def main():
     # Generate Moiré pattern
     x, y, pattern1, pattern2, moire = simulate_moire_pattern()
-    
+
     # Plot results
     plot_results(x, y, pattern1, pattern2, moire)
-    plt.show()
+
+    # Save plot to output directory
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output')
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, 'moire_pattern.png'), dpi=150, bbox_inches='tight')
+    print(f"Plot saved to {os.path.join(output_dir, 'moire_pattern.png')}")
 
 if __name__ == "__main__":
     main() 

@@ -75,10 +75,15 @@ def plot_results(jet, surface_x, surface_y):
 def main():
     # Run simulation
     jet, surface_x, surface_y = simulate_coanda_effect()
-    
+
     # Plot results
     plot_results(jet, surface_x, surface_y)
-    plt.show()
+
+    # Save plot to output directory
+    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output')
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, 'coanda_effect.png'), dpi=150, bbox_inches='tight')
+    print(f"Plot saved to {os.path.join(output_dir, 'coanda_effect.png')}")
 
 if __name__ == "__main__":
     main()
