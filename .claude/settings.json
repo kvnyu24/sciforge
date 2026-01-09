@@ -1,0 +1,44 @@
+{
+  "project": {
+    "name": "sciforge",
+    "description": "Scientific computing library for physics simulations, stochastic processes, and numerical methods",
+    "language": "python",
+    "version": "0.1.0"
+  },
+  "conventions": {
+    "style": {
+      "formatter": "black",
+      "lineLength": 88,
+      "docstringStyle": "numpy"
+    },
+    "testing": {
+      "framework": "pytest",
+      "coverageThreshold": 80,
+      "testDirectory": "tests"
+    },
+    "typing": {
+      "enabled": true,
+      "strictMode": false,
+      "useArrayLike": true
+    }
+  },
+  "patterns": {
+    "baseClasses": [
+      "BaseClass",
+      "BaseSolver",
+      "BaseProcess",
+      "PhysicalSystem",
+      "DynamicalSystem",
+      "Field"
+    ],
+    "historyTracking": true,
+    "validationRequired": true
+  },
+  "commands": {
+    "test": "pytest tests/ -v",
+    "format": "black src/ tests/",
+    "typecheck": "mypy src/sciforge/",
+    "lint": "ruff check src/",
+    "docs": "cd docs && make html"
+  }
+}

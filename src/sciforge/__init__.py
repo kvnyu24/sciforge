@@ -8,4 +8,5 @@ from . import core
 from . import numerical
 from . import physics
 from . import stochastic
-from . import differential 
+from . import differential
+from . import chaos
