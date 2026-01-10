@@ -37,6 +37,8 @@ from .statistical_mechanics import *
 from .quantum_mechanics import *
 from .qft import *
 from .condensed_matter import *
+from .amo import *
+from .plasma import *
 
 __all__ = [
     # Mechanics
@@ -169,4 +171,27 @@ __all__ = [
     'BCSTheory', 'CooperPair', 'MeissnerEffect', 'JosephsonJunction', 'SQUID',
     # Topological Matter
     'BerryPhase', 'BerryCurvature', 'ChernNumber', 'TopologicalInsulator2D', 'IntegerQuantumHall',
+    # AMO Physics (Phase 9)
+    # Atomic Structure
+    'HydrogenAtom', 'MultielectronAtom', 'SlaterDeterminant', 'AtomicTerm', 'SelectionRules',
+    # Atom-Light Interaction
+    'TwoLevelAtom', 'BlochEquations', 'DipoleMatrixElement', 'EinsteinCoefficients',
+    # Laser Physics
+    'LaserCavity', 'GainMedium', 'RateEquations', 'ModeLocking',
+    # Laser Cooling & Trapping
+    'DopplerCooling', 'MagnetoOpticalTrap', 'OpticalDipoleTrap', 'OpticalLattice',
+    # Ultracold Atoms
+    'BoseEinsteinCondensate', 'GrossPitaevskii', 'FermiGas', 'FeshbachResonance',
+    # Molecular Physics
+    'MolecularOrbital', 'BornOppenheimer', 'VibrationalSpectrum', 'RotationalSpectrum', 'FranckCondon',
+    # Plasma & Astrophysics (Phase 10)
+    # Plasma Fundamentals
+    'DebyeLength', 'PlasmaFrequency', 'PlasmaParameter', 'VlasovEquation', 'LandauDamping',
+    # Magnetohydrodynamics
+    'MHDEquations', 'AlfvenWave', 'Magnetosonic', 'MHDInstability', 'MagneticReconnection',
+    # Fusion
+    'LawsonCriterion', 'TokamakEquilibrium', 'MirrorTrap', 'ICFCapsule',
+    # Astrophysics
+    'HydrostaticStar', 'LaneEmden', 'StellarEvolution', 'WhiteDwarf', 'NeutronStar',
+    'AccretionDisk', 'JetLaunching', 'Nucleosynthesis',
 ]
