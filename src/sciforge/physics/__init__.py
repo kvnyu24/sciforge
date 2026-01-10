@@ -32,6 +32,7 @@ from .energy import *
 from .orbital import *
 from .analytical_mechanics import *
 from .electromagnetism import *
+from .optics import *
 
 __all__ = [
     # Mechanics
@@ -73,4 +74,18 @@ __all__ = [
     'DipoleRadiation', 'LarmorFormula', 'SynchrotronRadiation', 'CherenkovRadiation', 'Bremsstrahlung', 'AntennaPattern',
     'MultipoleExpansion', 'OctupoleField', 'SphericalHarmonics',
     'DielectricMaterial', 'MagneticMaterial', 'ConductorSkin', 'PlasmaDispersion', 'MetamaterialUnit',
+    # Optics (Phase 3)
+    # Wave Equation Solvers
+    'WaveEquation1D', 'WaveEquation2D', 'WaveEquation3D', 'HelmholtzSolver',
+    # Interference & Diffraction
+    'TwoSlitInterference', 'MultiSlitInterference', 'SingleSlitDiffraction',
+    'CircularAperture', 'ThinFilmInterference', 'FabryPerotInterferometer',
+    # Geometric Optics
+    'Ray', 'ThinLens', 'ThickLens', 'SphericalMirror', 'OpticalSystem', 'Prism', 'SnellRefraction',
+    # Polarization
+    'JonesVector', 'JonesMatrix', 'StokesVector', 'MuellerMatrix', 'Waveplate', 'Polarizer',
+    # Nonlinear Optics
+    'SecondHarmonicGeneration', 'KerrEffect', 'FourWaveMixing', 'SolitonPulse',
+    # Acoustics
+    'SoundWave', 'AcousticImpedance', 'DopplerShift', 'ResonantCavity', 'Ultrasound',
 ]
