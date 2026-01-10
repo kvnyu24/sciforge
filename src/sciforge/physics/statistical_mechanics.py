@@ -2140,3 +2140,502 @@ class CrooksRelation(BaseClass):
                 return W_cross
 
         return np.mean(work_forward)  # Fallback
+
+
+# ==============================================================================
+# Phase 4.6 Additions: Continuous Spin Models
+# ==============================================================================
+
+class XYModel(BaseClass):
+    """
+    2D XY Model with continuous planar spins.
+
+    H = -J Σ cos(θᵢ - θⱼ) - h Σ cos(θᵢ)
+
+    Each spin is characterized by an angle θ ∈ [0, 2π).
+    Exhibits Kosterlitz-Thouless phase transition.
+
+    Args:
+        L: Linear system size (L × L lattice)
+        J: Coupling constant (J > 0 ferromagnetic)
+        h: External field strength
+
+    Examples:
+        >>> xy = XYModel(L=20, J=1.0)
+        >>> m = xy.simulate(T=1.0, n_steps=1000)
+    """
+
+    def __init__(self, L: int, J: float = 1.0, h: float = 0.0):
+        super().__init__()
+        self.L = L
+        self.J = J
+        self.h = h
+        self.N = L * L
+
+        # Initialize random spin angles
+        self.theta = np.random.uniform(0, 2 * np.pi, size=(L, L))
+
+        # BKT transition temperature (approximate)
+        self.T_BKT = 0.893 * J / K_B
+
+    def energy(self) -> float:
+        """Calculate total energy of current configuration."""
+        E = 0.0
+        for i in range(self.L):
+            for j in range(self.L):
+                # Coupling to neighbors
+                neighbors = [
+                    self.theta[(i+1) % self.L, j],
+                    self.theta[(i-1) % self.L, j],
+                    self.theta[i, (j+1) % self.L],
+                    self.theta[i, (j-1) % self.L]
+                ]
+                for theta_n in neighbors:
+                    E -= self.J * np.cos(self.theta[i, j] - theta_n) / 2
+
+                # External field
+                E -= self.h * np.cos(self.theta[i, j])
+        return E
+
+    def magnetization(self) -> Tuple[float, float]:
+        """
+        Calculate magnetization vector (mx, my) per spin.
+
+        Returns:
+            Tuple of (mx, my) components
+        """
+        mx = np.mean(np.cos(self.theta))
+        my = np.mean(np.sin(self.theta))
+        return mx, my
+
+    def magnetization_magnitude(self) -> float:
+        """Calculate magnitude of magnetization per spin."""
+        mx, my = self.magnetization()
+        return np.sqrt(mx**2 + my**2)
+
+    def vorticity(self, i: int, j: int) -> int:
+        """
+        Calculate vorticity around plaquette (i, j).
+
+        Returns +1 for vortex, -1 for antivortex, 0 otherwise.
+        """
+        # Angles around plaquette
+        angles = [
+            self.theta[i, j],
+            self.theta[(i+1) % self.L, j],
+            self.theta[(i+1) % self.L, (j+1) % self.L],
+            self.theta[i, (j+1) % self.L]
+        ]
+
+        # Calculate winding
+        winding = 0.0
+        for k in range(4):
+            diff = angles[(k+1) % 4] - angles[k]
+            # Wrap to [-π, π]
+            diff = np.arctan2(np.sin(diff), np.cos(diff))
+            winding += diff
+
+        return int(round(winding / (2 * np.pi)))
+
+    def count_vortices(self) -> Tuple[int, int]:
+        """Count number of vortices and antivortices."""
+        n_vortex = 0
+        n_antivortex = 0
+        for i in range(self.L):
+            for j in range(self.L):
+                v = self.vorticity(i, j)
+                if v > 0:
+                    n_vortex += v
+                elif v < 0:
+                    n_antivortex -= v
+        return n_vortex, n_antivortex
+
+    def metropolis_step(self, T: float, delta_max: float = 0.5):
+        """Perform one Metropolis Monte Carlo sweep."""
+        beta = 1 / (K_B * T)
+
+        for _ in range(self.N):
+            # Random site
+            i = np.random.randint(self.L)
+            j = np.random.randint(self.L)
+
+            # Propose new angle
+            theta_old = self.theta[i, j]
+            delta = np.random.uniform(-delta_max, delta_max)
+            theta_new = theta_old + delta
+
+            # Calculate energy change
+            neighbors = [
+                self.theta[(i+1) % self.L, j],
+                self.theta[(i-1) % self.L, j],
+                self.theta[i, (j+1) % self.L],
+                self.theta[i, (j-1) % self.L]
+            ]
+
+            E_old = -self.h * np.cos(theta_old)
+            E_new = -self.h * np.cos(theta_new)
+            for theta_n in neighbors:
+                E_old -= self.J * np.cos(theta_old - theta_n)
+                E_new -= self.J * np.cos(theta_new - theta_n)
+
+            dE = E_new - E_old
+
+            if dE <= 0 or np.random.random() < np.exp(-beta * dE):
+                self.theta[i, j] = theta_new
+
+    def simulate(
+        self,
+        T: float,
+        n_steps: int = 1000,
+        n_equilibrate: int = 100
+    ) -> float:
+        """
+        Run Monte Carlo simulation.
+
+        Returns:
+            Average magnetization magnitude
+        """
+        # Equilibration
+        for _ in range(n_equilibrate):
+            self.metropolis_step(T)
+
+        # Measurement
+        m_sum = 0.0
+        for _ in range(n_steps):
+            self.metropolis_step(T)
+            m_sum += self.magnetization_magnitude()
+
+        return m_sum / n_steps
+
+    def helicity_modulus(self, T: float, n_samples: int = 100) -> float:
+        """
+        Calculate helicity modulus (spin stiffness).
+
+        The helicity modulus Υ measures the response to a twist.
+        """
+        beta = 1 / (K_B * T)
+
+        Jx_sum = 0.0
+        Jx2_sum = 0.0
+        cos_sum = 0.0
+
+        for _ in range(n_samples):
+            self.metropolis_step(T)
+
+            # Calculate current
+            Jx = 0.0
+            cos_total = 0.0
+            for i in range(self.L):
+                for j in range(self.L):
+                    diff = self.theta[(i+1) % self.L, j] - self.theta[i, j]
+                    Jx += np.sin(diff)
+                    cos_total += np.cos(diff)
+
+            Jx_sum += Jx
+            Jx2_sum += Jx**2
+            cos_sum += cos_total
+
+        Jx_avg = Jx_sum / n_samples
+        Jx2_avg = Jx2_sum / n_samples
+        cos_avg = cos_sum / (n_samples * self.N)
+
+        # Υ = J⟨cos(Δθ)⟩ - βJ²⟨Jₓ²⟩/N
+        return self.J * cos_avg - beta * self.J**2 * (Jx2_avg - Jx_avg**2) / self.N
+
+
+class HeisenbergModel(BaseClass):
+    """
+    3D Heisenberg Model with O(3) spins.
+
+    H = -J Σ Sᵢ·Sⱼ - h·Σ Sᵢ
+
+    Each spin is a 3D unit vector Sᵢ = (Sₓ, Sᵧ, Sᵤ).
+
+    Args:
+        L: Linear system size (L × L × L lattice)
+        J: Coupling constant (J > 0 ferromagnetic)
+        h: External field vector (hx, hy, hz)
+        dim: Spatial dimension (2 or 3)
+
+    Examples:
+        >>> heis = HeisenbergModel(L=10, J=1.0, dim=3)
+        >>> m = heis.simulate(T=1.5, n_steps=500)
+    """
+
+    def __init__(
+        self,
+        L: int,
+        J: float = 1.0,
+        h: ArrayLike = (0.0, 0.0, 0.0),
+        dim: int = 3
+    ):
+        super().__init__()
+        self.L = L
+        self.J = J
+        self.h = np.array(h)
+        self.dim = dim
+
+        if dim == 2:
+            self.shape = (L, L)
+            self.N = L * L
+        else:
+            self.shape = (L, L, L)
+            self.N = L * L * L
+
+        # Initialize random spins on unit sphere
+        self.spins = self._random_spins()
+
+        # Approximate critical temperature (3D)
+        if dim == 3:
+            self.T_c = 1.443 * J / K_B
+        else:
+            self.T_c = None  # No finite-T transition in 2D
+
+    def _random_spins(self) -> np.ndarray:
+        """Generate random unit vectors."""
+        shape = self.shape + (3,)
+        spins = np.random.randn(*shape)
+        norms = np.linalg.norm(spins, axis=-1, keepdims=True)
+        return spins / norms
+
+    def _get_neighbors(self, idx: tuple) -> list:
+        """Get indices of neighbors for a given site."""
+        neighbors = []
+        for d in range(self.dim):
+            for delta in [-1, 1]:
+                neighbor = list(idx)
+                neighbor[d] = (neighbor[d] + delta) % self.L
+                neighbors.append(tuple(neighbor))
+        return neighbors
+
+    def energy(self) -> float:
+        """Calculate total energy."""
+        E = 0.0
+
+        # Iterate over all sites
+        it = np.nditer(np.zeros(self.shape), flags=['multi_index'])
+        while not it.finished:
+            idx = it.multi_index
+            S = self.spins[idx]
+
+            # Coupling to neighbors (count each pair once)
+            for d in range(self.dim):
+                neighbor = list(idx)
+                neighbor[d] = (neighbor[d] + 1) % self.L
+                S_neighbor = self.spins[tuple(neighbor)]
+                E -= self.J * np.dot(S, S_neighbor)
+
+            # External field
+            E -= np.dot(self.h, S)
+
+            it.iternext()
+
+        return E
+
+    def magnetization(self) -> np.ndarray:
+        """Calculate magnetization vector per spin."""
+        return np.mean(self.spins, axis=tuple(range(self.dim)))
+
+    def magnetization_magnitude(self) -> float:
+        """Calculate magnitude of magnetization per spin."""
+        return np.linalg.norm(self.magnetization())
+
+    def _propose_new_spin(self, S_old: np.ndarray, delta: float = 0.5) -> np.ndarray:
+        """Propose a new spin orientation near the old one."""
+        # Add random perturbation
+        S_new = S_old + delta * np.random.randn(3)
+        # Normalize to unit sphere
+        return S_new / np.linalg.norm(S_new)
+
+    def metropolis_step(self, T: float, delta: float = 0.5):
+        """Perform one Metropolis Monte Carlo sweep."""
+        beta = 1 / (K_B * T)
+
+        for _ in range(self.N):
+            # Random site
+            idx = tuple(np.random.randint(self.L, size=self.dim))
+
+            S_old = self.spins[idx].copy()
+            S_new = self._propose_new_spin(S_old, delta)
+
+            # Calculate energy change
+            neighbors = self._get_neighbors(idx)
+            S_neighbors = sum(self.spins[n] for n in neighbors)
+
+            E_old = -self.J * np.dot(S_old, S_neighbors) - np.dot(self.h, S_old)
+            E_new = -self.J * np.dot(S_new, S_neighbors) - np.dot(self.h, S_new)
+            dE = E_new - E_old
+
+            if dE <= 0 or np.random.random() < np.exp(-beta * dE):
+                self.spins[idx] = S_new
+
+    def simulate(
+        self,
+        T: float,
+        n_steps: int = 1000,
+        n_equilibrate: int = 100
+    ) -> float:
+        """
+        Run Monte Carlo simulation.
+
+        Returns:
+            Average magnetization magnitude
+        """
+        for _ in range(n_equilibrate):
+            self.metropolis_step(T)
+
+        m_sum = 0.0
+        for _ in range(n_steps):
+            self.metropolis_step(T)
+            m_sum += self.magnetization_magnitude()
+
+        return m_sum / n_steps
+
+    def spin_correlation(self, r: int) -> float:
+        """
+        Calculate spin-spin correlation function C(r) = ⟨S₀·Sᵣ⟩.
+
+        Args:
+            r: Distance in lattice units
+        """
+        C = 0.0
+        count = 0
+
+        it = np.nditer(np.zeros(self.shape), flags=['multi_index'])
+        while not it.finished:
+            idx = it.multi_index
+            S0 = self.spins[idx]
+
+            # Neighbor at distance r along first axis
+            neighbor = list(idx)
+            neighbor[0] = (neighbor[0] + r) % self.L
+            Sr = self.spins[tuple(neighbor)]
+
+            C += np.dot(S0, Sr)
+            count += 1
+            it.iternext()
+
+        return C / count
+
+
+class CorrelationLength(BaseClass):
+    """
+    Correlation length calculator for spin systems.
+
+    Near critical point: ξ ~ |T - Tc|^(-ν)
+
+    Args:
+        T_c: Critical temperature
+        nu: Correlation length exponent
+        xi_0: Bare correlation length
+
+    Examples:
+        >>> cl = CorrelationLength(T_c=2.27, nu=1.0)
+        >>> xi = cl.divergence(T=2.5)
+    """
+
+    def __init__(
+        self,
+        T_c: float,
+        nu: float = 1.0,
+        xi_0: float = 1.0
+    ):
+        super().__init__()
+        self.T_c = T_c
+        self.nu = nu
+        self.xi_0 = xi_0
+
+    def reduced_temperature(self, T: float) -> float:
+        """Calculate reduced temperature t = (T - Tc)/Tc."""
+        return (T - self.T_c) / self.T_c
+
+    def divergence(self, T: float) -> float:
+        """
+        Calculate correlation length using critical scaling.
+
+        ξ = ξ₀ |t|^(-ν)
+        """
+        t = abs(self.reduced_temperature(T))
+        if t < 1e-10:
+            return np.inf
+        return self.xi_0 * t**(-self.nu)
+
+    @staticmethod
+    def from_correlation_function(
+        correlations: ArrayLike,
+        distances: ArrayLike
+    ) -> float:
+        """
+        Extract correlation length from correlation function.
+
+        Fits C(r) ~ exp(-r/ξ) to extract ξ.
+
+        Args:
+            correlations: Correlation values C(r)
+            distances: Distance values r
+
+        Returns:
+            Estimated correlation length
+        """
+        C = np.array(correlations)
+        r = np.array(distances)
+
+        # Filter positive correlations for log fit
+        mask = C > 0
+        if np.sum(mask) < 2:
+            return 0.0
+
+        C_pos = C[mask]
+        r_pos = r[mask]
+
+        # Linear fit to log(C) vs r
+        log_C = np.log(C_pos)
+
+        # Use least squares: log(C) = log(A) - r/ξ
+        n = len(r_pos)
+        sum_r = np.sum(r_pos)
+        sum_log = np.sum(log_C)
+        sum_r2 = np.sum(r_pos**2)
+        sum_r_log = np.sum(r_pos * log_C)
+
+        slope = (n * sum_r_log - sum_r * sum_log) / (n * sum_r2 - sum_r**2)
+
+        if slope >= 0:
+            return np.inf  # Non-decaying correlation
+
+        return -1 / slope
+
+    @staticmethod
+    def finite_size_scaling(
+        L_values: ArrayLike,
+        xi_values: ArrayLike
+    ) -> Tuple[float, float]:
+        """
+        Perform finite-size scaling analysis.
+
+        At Tc: ξ(L) ~ L
+        Away from Tc: ξ saturates at bulk value
+
+        Returns:
+            Tuple of (extrapolated xi_infinity, effective exponent)
+        """
+        L = np.array(L_values)
+        xi = np.array(xi_values)
+
+        # Fit ξ = a * L^b for large L
+        log_L = np.log(L)
+        log_xi = np.log(xi)
+
+        # Linear regression
+        n = len(L)
+        sum_x = np.sum(log_L)
+        sum_y = np.sum(log_xi)
+        sum_xy = np.sum(log_L * log_xi)
+        sum_x2 = np.sum(log_L**2)
+
+        b = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x**2)
+        a = (sum_y - b * sum_x) / n
+
+        xi_inf = np.exp(a) if b < 1 else np.inf
+
+        return xi_inf, b
