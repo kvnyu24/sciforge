@@ -36,6 +36,7 @@ from .optics import *
 from .statistical_mechanics import *
 from .quantum_mechanics import *
 from .qft import *
+from .condensed_matter import *
 
 __all__ = [
     # Mechanics
@@ -150,4 +151,22 @@ __all__ = [
     # Symmetries
     'GlobalSymmetry', 'LocalGaugeSymmetry', 'SpontaneousSymmetryBreaking',
     'GoldstoneBoson', 'HiggsMechanism',
+    # Condensed Matter (Phase 8)
+    # Crystal Structure
+    'BravaisLattice', 'ReciprocalLattice', 'BrillouinZone', 'CrystalSymmetry', 'MillerIndices',
+    # Band Theory
+    'BlochWavefunction', 'KronigPenney', 'TightBinding', 'NearlyFreeElectron',
+    'EffectiveMass', 'DensityOfStates', 'FermiSurface',
+    # Semiconductors
+    'IntrinsicSemiconductor', 'DopedSemiconductor', 'PNJunction', 'QuantumWell', 'QuantumDot',
+    # Transport
+    'DrudeModel', 'BoltzmannTransport', 'HallEffect', 'Mobility',
+    # Lattice Dynamics
+    'PhononDispersion', 'ThermalConductivity',
+    # Magnetism
+    'Diamagnetism', 'Paramagnetism', 'Ferromagnetism', 'MagnonDispersion', 'HysteresisLoop',
+    # Superconductivity
+    'BCSTheory', 'CooperPair', 'MeissnerEffect', 'JosephsonJunction', 'SQUID',
+    # Topological Matter
+    'BerryPhase', 'BerryCurvature', 'ChernNumber', 'TopologicalInsulator2D', 'IntegerQuantumHall',
 ]
