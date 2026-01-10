@@ -1902,3 +1902,671 @@ class LindbladMasterEquation(BaseClass):
         rho = rho / np.trace(rho)
 
         return rho
+
+
+# ==============================================================================
+# Phase 5.4 Additions: Multi-particle Systems
+# ==============================================================================
+
+class Helium(BaseClass):
+    """
+    Two-electron helium atom.
+
+    Uses variational and perturbation methods for the ground state.
+
+    H = -ℏ²/2m (∇₁² + ∇₂²) - Ze²/r₁ - Ze²/r₂ + e²/r₁₂
+
+    Args:
+        Z: Nuclear charge (2 for He, can vary for He-like ions)
+
+    Examples:
+        >>> he = Helium(Z=2)
+        >>> E = he.ground_state_energy_variational()
+    """
+
+    def __init__(self, Z: float = 2.0):
+        super().__init__()
+        self.Z = Z
+        self.E_h = 27.211  # Hartree in eV
+
+    def ground_state_energy_zeroth(self) -> float:
+        """E⁽⁰⁾ = -2Z² (in Hartree)."""
+        return -2 * self.Z**2 * self.E_h / 2
+
+    def first_order_correction(self) -> float:
+        """E⁽¹⁾ = 5Z/8 (in Hartree)."""
+        return 5 * self.Z / 8 * self.E_h / 2
+
+    def ground_state_energy_perturbation(self) -> float:
+        """E = E⁽⁰⁾ + E⁽¹⁾."""
+        return self.ground_state_energy_zeroth() + self.first_order_correction()
+
+    def ground_state_energy_variational(self, Z_eff: Optional[float] = None) -> float:
+        """Variational energy with Z_eff = Z - 5/16."""
+        if Z_eff is None:
+            Z_eff = self.Z - 5/16
+        return (Z_eff**2 - 2 * self.Z * Z_eff + 5 * Z_eff / 8) * self.E_h
+
+    def optimal_Z_eff(self) -> float:
+        """Optimal effective charge."""
+        return self.Z - 5/16
+
+    def ionization_energy(self) -> float:
+        """First ionization energy."""
+        E_He = self.ground_state_energy_variational()
+        E_He_plus = -self.Z**2 * self.E_h / 2
+        return E_He_plus - E_He
+
+
+class SecondQuantization(BaseClass):
+    """
+    Second quantization (Fock space) formalism.
+
+    Args:
+        n_modes: Number of single-particle modes
+        statistics: 'boson' or 'fermion'
+
+    Examples:
+        >>> sq = SecondQuantization(n_modes=4, statistics='fermion')
+        >>> state = sq.create(0, sq.vacuum())
+    """
+
+    def __init__(self, n_modes: int, statistics: str = 'fermion'):
+        super().__init__()
+        self.n_modes = n_modes
+        self.statistics = statistics
+        self.dim = 2**n_modes if statistics == 'fermion' else None
+        self._build_basis()
+
+    def _build_basis(self):
+        """Build Fock space basis."""
+        if self.statistics == 'fermion':
+            self.dim = 2**self.n_modes
+            self.basis = [tuple((i >> j) & 1 for j in range(self.n_modes))
+                         for i in range(self.dim)]
+            self.basis_to_idx = {s: i for i, s in enumerate(self.basis)}
+
+    def vacuum(self) -> np.ndarray:
+        """Return vacuum state."""
+        state = np.zeros(self.dim, dtype=complex)
+        state[0] = 1.0
+        return state
+
+    def creation_operator(self, mode: int) -> np.ndarray:
+        """Build creation operator a†_mode."""
+        a_dag = np.zeros((self.dim, self.dim), dtype=complex)
+        for i, state in enumerate(self.basis):
+            if state[mode] == 0:
+                new_state = list(state)
+                new_state[mode] = 1
+                j = self.basis_to_idx[tuple(new_state)]
+                sign = (-1)**sum(state[:mode])
+                a_dag[j, i] = sign
+        return a_dag
+
+    def annihilation_operator(self, mode: int) -> np.ndarray:
+        """Build annihilation operator."""
+        return self.creation_operator(mode).T.conj()
+
+    def number_operator(self, mode: int) -> np.ndarray:
+        """Build number operator n_mode."""
+        a_dag = self.creation_operator(mode)
+        a = self.annihilation_operator(mode)
+        return a_dag @ a
+
+    def create(self, mode: int, state: np.ndarray) -> np.ndarray:
+        """Apply creation operator."""
+        return self.creation_operator(mode) @ state
+
+    def annihilate(self, mode: int, state: np.ndarray) -> np.ndarray:
+        """Apply annihilation operator."""
+        return self.annihilation_operator(mode) @ state
+
+
+# ==============================================================================
+# Phase 5.5 Additions: Approximation Methods
+# ==============================================================================
+
+class DegeneratePerturbation(BaseClass):
+    """
+    Degenerate perturbation theory.
+
+    Args:
+        H0: Unperturbed Hamiltonian
+        V: Perturbation
+
+    Examples:
+        >>> dp = DegeneratePerturbation(H0, V)
+        >>> E, states = dp.first_order_correction(E0=1.0)
+    """
+
+    def __init__(self, H0: np.ndarray, V: np.ndarray, threshold: float = 1e-10):
+        super().__init__()
+        self.H0 = np.array(H0, dtype=complex)
+        self.V = np.array(V, dtype=complex)
+        self.threshold = threshold
+        self.E0, self.psi0 = np.linalg.eigh(H0)
+
+    def find_degenerate_subspace(self, E_target: float) -> Tuple[np.ndarray, np.ndarray]:
+        """Find degenerate subspace for given energy."""
+        indices = np.where(np.abs(self.E0 - E_target) < self.threshold)[0]
+        return indices, self.psi0[:, indices]
+
+    def first_order_correction(self, E0: float) -> Tuple[np.ndarray, np.ndarray]:
+        """Calculate first-order corrections."""
+        indices, states = self.find_degenerate_subspace(E0)
+        if len(indices) == 1:
+            E1 = np.real(states[:, 0].conj() @ self.V @ states[:, 0])
+            return np.array([E1]), states
+        V_sub = states.T.conj() @ self.V @ states
+        E1, coeffs = np.linalg.eigh(V_sub)
+        return E1, states @ coeffs
+
+
+class TimeDependentPerturbation(BaseClass):
+    """
+    Time-dependent perturbation theory.
+
+    Args:
+        H0: Unperturbed Hamiltonian
+        hbar: Reduced Planck constant
+
+    Examples:
+        >>> tdp = TimeDependentPerturbation(H0)
+        >>> prob = tdp.transition_probability(psi_i, psi_f, V, t)
+    """
+
+    def __init__(self, H0: np.ndarray, hbar: float = HBAR):
+        super().__init__()
+        self.H0 = np.array(H0, dtype=complex)
+        self.hbar = hbar
+        self.E0, self.psi0 = np.linalg.eigh(H0)
+
+    def transition_amplitude(self, psi_i: np.ndarray, psi_f: np.ndarray,
+                            V: np.ndarray, t: float) -> complex:
+        """First-order transition amplitude."""
+        V_fi = np.vdot(psi_f, V @ psi_i)
+        E_i = np.real(np.vdot(psi_i, self.H0 @ psi_i))
+        E_f = np.real(np.vdot(psi_f, self.H0 @ psi_f))
+        omega_fi = (E_f - E_i) / self.hbar
+        if np.abs(omega_fi) < 1e-15:
+            return -1j * V_fi * t / self.hbar
+        return -1j * V_fi * (np.exp(1j * omega_fi * t) - 1) / (self.hbar * omega_fi)
+
+    def transition_probability(self, psi_i: np.ndarray, psi_f: np.ndarray,
+                              V: np.ndarray, t: float) -> float:
+        """Calculate transition probability."""
+        return np.abs(self.transition_amplitude(psi_i, psi_f, V, t))**2
+
+    def fermi_golden_rule(self, psi_i: np.ndarray, V: np.ndarray,
+                         density_of_states: Callable[[float], float]) -> float:
+        """Fermi's golden rule rate."""
+        Gamma = 0.0
+        for n in range(len(self.E0)):
+            psi_f = self.psi0[:, n]
+            V_fi = np.vdot(psi_f, V @ psi_i)
+            Gamma += 2 * np.pi / self.hbar * np.abs(V_fi)**2 * density_of_states(self.E0[n])
+        return Gamma
+
+
+class BornApproximation(BaseClass):
+    """
+    Born approximation for scattering.
+
+    Args:
+        mass: Particle mass
+        hbar: Reduced Planck constant
+    """
+
+    def __init__(self, mass: float = M_E, hbar: float = HBAR):
+        super().__init__()
+        self.mass = mass
+        self.hbar = hbar
+
+    def momentum_transfer(self, k: float, theta: float) -> float:
+        """Calculate momentum transfer q = 2k sin(θ/2)."""
+        return 2 * k * np.sin(theta / 2)
+
+    def scattering_amplitude_spherical(self, V: Callable[[float], float],
+                                       k: float, theta: float, r_max: float = 100.0) -> complex:
+        """Calculate scattering amplitude for spherical potential."""
+        q = self.momentum_transfer(k, theta)
+        if q < 1e-15:
+            r = np.linspace(1e-10, r_max, 1000)
+            integrand = r**2 * np.array([V(ri) for ri in r])
+            return -self.mass / (np.pi * self.hbar**2) * np.trapz(integrand, r)
+        r = np.linspace(1e-10, r_max, 1000)
+        integrand = r * np.array([V(ri) for ri in r]) * np.sin(q * r)
+        return -2 * self.mass / (self.hbar**2 * q) * np.trapz(integrand, r)
+
+    def differential_cross_section(self, V: Callable[[float], float],
+                                   k: float, theta: float) -> float:
+        """Calculate dσ/dΩ = |f(θ)|²."""
+        return np.abs(self.scattering_amplitude_spherical(V, k, theta))**2
+
+
+class HartreeFock(BaseClass):
+    """
+    Hartree-Fock self-consistent field method.
+
+    Args:
+        n_basis: Number of basis functions
+        n_electrons: Number of electrons
+        overlap: Overlap matrix S
+        kinetic: Kinetic energy matrix T
+        nuclear: Nuclear attraction matrix V_ne
+        two_electron: Two-electron integrals
+    """
+
+    def __init__(self, n_basis: int, n_electrons: int, overlap: np.ndarray,
+                 kinetic: np.ndarray, nuclear: np.ndarray, two_electron: np.ndarray):
+        super().__init__()
+        self.n_basis = n_basis
+        self.n_electrons = n_electrons
+        self.n_occ = n_electrons // 2
+        self.S = np.array(overlap)
+        self.T = np.array(kinetic)
+        self.V_ne = np.array(nuclear)
+        self.eri = np.array(two_electron)
+        self.H_core = self.T + self.V_ne
+        self.P = np.zeros((n_basis, n_basis))
+
+    def build_fock_matrix(self) -> np.ndarray:
+        """Build Fock matrix."""
+        F = self.H_core.copy()
+        for mu in range(self.n_basis):
+            for nu in range(self.n_basis):
+                for lam in range(self.n_basis):
+                    for sig in range(self.n_basis):
+                        F[mu, nu] += self.P[lam, sig] * self.eri[mu, nu, lam, sig]
+                        F[mu, nu] -= 0.5 * self.P[lam, sig] * self.eri[mu, lam, nu, sig]
+        return F
+
+    def solve(self, max_iter: int = 100, tol: float = 1e-8) -> Tuple[float, np.ndarray]:
+        """Run SCF iteration."""
+        s, U = np.linalg.eigh(self.S)
+        X = U @ np.diag(1.0 / np.sqrt(s))
+        E_old = 0.0
+        for _ in range(max_iter):
+            F = self.build_fock_matrix()
+            F_prime = X.T @ F @ X
+            epsilon, C_prime = np.linalg.eigh(F_prime)
+            C = X @ C_prime
+            C_occ = C[:, :self.n_occ]
+            self.P = 2 * C_occ @ C_occ.T
+            E = 0.5 * np.trace(self.P @ (self.H_core + F))
+            if abs(E - E_old) < tol:
+                return E, C
+            E_old = E
+        return E_old, C
+
+
+class DensityFunctional(BaseClass):
+    """
+    Density Functional Theory basics (LDA).
+
+    Args:
+        grid: Spatial grid points
+        functional: 'lda', 'lda_x', 'lda_c'
+    """
+
+    def __init__(self, grid: np.ndarray, functional: str = 'lda'):
+        super().__init__()
+        self.grid = np.array(grid)
+        self.dx = grid[1] - grid[0] if len(grid) > 1 else 1.0
+        self.functional = functional
+
+    def lda_exchange(self, rho: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """LDA exchange energy density and potential."""
+        C_x = 0.7386
+        rho_safe = np.maximum(rho, 1e-30)
+        epsilon_x = -C_x * rho_safe**(1/3)
+        v_x = -(4/3) * C_x * rho_safe**(1/3)
+        return epsilon_x, v_x
+
+    def exchange_correlation_energy(self, rho: np.ndarray) -> float:
+        """Calculate XC energy."""
+        epsilon_x, _ = self.lda_exchange(rho)
+        return np.sum(rho * epsilon_x) * self.dx
+
+    def exchange_correlation_potential(self, rho: np.ndarray) -> np.ndarray:
+        """Calculate XC potential."""
+        _, v_x = self.lda_exchange(rho)
+        return v_x
+
+
+# ==============================================================================
+# Phase 5.6 Additions: Open Quantum Systems
+# ==============================================================================
+
+class QuantumChannel(BaseClass):
+    """
+    Quantum channel (CPTP map).
+
+    Args:
+        kraus_operators: List of Kraus operators
+
+    Examples:
+        >>> depol = QuantumChannel.depolarizing(p=0.1)
+        >>> rho_out = depol.apply(rho_in)
+    """
+
+    def __init__(self, kraus_operators: List[np.ndarray]):
+        super().__init__()
+        self.kraus = [np.array(K, dtype=complex) for K in kraus_operators]
+        self.dim = self.kraus[0].shape[0]
+
+    def apply(self, rho: np.ndarray) -> np.ndarray:
+        """Apply channel: ε(ρ) = Σ K_i ρ K_i†."""
+        return sum(K @ rho @ K.T.conj() for K in self.kraus)
+
+    @classmethod
+    def depolarizing(cls, p: float, dim: int = 2) -> 'QuantumChannel':
+        """Depolarizing channel."""
+        I = np.eye(dim)
+        K0 = np.sqrt(1 - 3*p/4) * I
+        X = np.array([[0, 1], [1, 0]])
+        Y = np.array([[0, -1j], [1j, 0]])
+        Z = np.array([[1, 0], [0, -1]])
+        factor = np.sqrt(p / 4)
+        return cls([K0, factor * X, factor * Y, factor * Z])
+
+    @classmethod
+    def amplitude_damping(cls, gamma: float) -> 'QuantumChannel':
+        """Amplitude damping channel."""
+        K0 = np.array([[1, 0], [0, np.sqrt(1 - gamma)]], dtype=complex)
+        K1 = np.array([[0, np.sqrt(gamma)], [0, 0]], dtype=complex)
+        return cls([K0, K1])
+
+    @classmethod
+    def phase_damping(cls, gamma: float) -> 'QuantumChannel':
+        """Phase damping channel."""
+        K0 = np.sqrt(1 - gamma) * np.eye(2, dtype=complex)
+        K1 = np.sqrt(gamma) * np.array([[1, 0], [0, 0]], dtype=complex)
+        K2 = np.sqrt(gamma) * np.array([[0, 0], [0, 1]], dtype=complex)
+        return cls([K0, K1, K2])
+
+
+class Decoherence(BaseClass):
+    """
+    Decoherence dynamics.
+
+    Args:
+        T1: Relaxation time
+        T2: Dephasing time
+    """
+
+    def __init__(self, T1: float, T2: float):
+        super().__init__()
+        self.T1 = T1
+        self.T2 = T2
+
+    def evolve(self, rho0: np.ndarray, t: float) -> np.ndarray:
+        """Evolve density matrix under decoherence."""
+        rho = np.array(rho0, dtype=complex)
+        if rho.shape == (2, 2):
+            decay1 = np.exp(-t / self.T1)
+            decay2 = np.exp(-t / self.T2)
+            rho_new = np.zeros((2, 2), dtype=complex)
+            rho_new[0, 0] = rho[0, 0] + (1 - decay1) * rho[1, 1]
+            rho_new[1, 1] = decay1 * rho[1, 1]
+            rho_new[0, 1] = decay2 * rho[0, 1]
+            rho_new[1, 0] = decay2 * rho[1, 0]
+            return rho_new
+        raise NotImplementedError("Only qubit decoherence implemented")
+
+
+class QuantumMeasurement(BaseClass):
+    """
+    Quantum measurement and POVM.
+
+    Args:
+        operators: Measurement operators
+    """
+
+    def __init__(self, operators: List[np.ndarray]):
+        super().__init__()
+        self.operators = [np.array(M, dtype=complex) for M in operators]
+        self.n_outcomes = len(operators)
+        self.dim = operators[0].shape[0]
+
+    def probabilities(self, rho: np.ndarray) -> np.ndarray:
+        """Calculate outcome probabilities."""
+        return np.array([np.real(np.trace(M.T.conj() @ M @ rho)) for M in self.operators])
+
+    def post_measurement_states(self, rho: np.ndarray) -> List[np.ndarray]:
+        """Calculate post-measurement states."""
+        probs = self.probabilities(rho)
+        states = []
+        for m, M in enumerate(self.operators):
+            if probs[m] > 1e-15:
+                states.append(M @ rho @ M.T.conj() / probs[m])
+            else:
+                states.append(np.zeros_like(rho))
+        return states
+
+    @classmethod
+    def computational_basis(cls, dim: int = 2) -> 'QuantumMeasurement':
+        """Projective measurement in computational basis."""
+        projectors = [np.zeros((dim, dim), dtype=complex) for _ in range(dim)]
+        for i in range(dim):
+            projectors[i][i, i] = 1
+        return cls(projectors)
+
+
+# ==============================================================================
+# Phase 5.7: Quantum Phenomena
+# ==============================================================================
+
+class QuantumTunneling(BaseClass):
+    """
+    Quantum tunneling through barriers.
+
+    Args:
+        mass: Particle mass
+        hbar: Reduced Planck constant
+    """
+
+    def __init__(self, mass: float = M_E, hbar: float = HBAR):
+        super().__init__()
+        self.mass = mass
+        self.hbar = hbar
+
+    def rectangular_barrier(self, V0: float, width: float, E: float) -> float:
+        """Transmission coefficient for rectangular barrier."""
+        if E >= V0:
+            k1 = np.sqrt(2 * self.mass * E) / self.hbar
+            k2 = np.sqrt(2 * self.mass * (E - V0)) / self.hbar
+            denom = 1 + (k1**2 - k2**2)**2 * np.sin(k2 * width)**2 / (4 * k1**2 * k2**2)
+            return 1 / denom
+        kappa = np.sqrt(2 * self.mass * (V0 - E)) / self.hbar
+        sinh_ka = np.sinh(kappa * width)
+        denom = 1 + V0**2 * sinh_ka**2 / (4 * E * (V0 - E))
+        return 1 / denom
+
+    def wkb_transmission(self, V: Callable[[float], float], E: float,
+                        x1: float, x2: float) -> float:
+        """WKB tunneling probability."""
+        x = np.linspace(x1, x2, 1000)
+        kappa = np.array([np.sqrt(max(0, 2*self.mass*(V(xi)-E))) / self.hbar for xi in x])
+        return np.exp(-2 * np.trapz(kappa, x))
+
+
+class QuantumInterference(BaseClass):
+    """
+    Quantum interference effects.
+
+    Args:
+        wavelength: de Broglie wavelength
+    """
+
+    def __init__(self, wavelength: float):
+        super().__init__()
+        self.wavelength = wavelength
+
+    def double_slit(self, d: float, D: float, x: np.ndarray) -> np.ndarray:
+        """Double-slit interference pattern."""
+        phase = np.pi * d * x / (self.wavelength * D)
+        return np.cos(phase)**2
+
+    def visibility(self, I_max: float, I_min: float) -> float:
+        """Fringe visibility."""
+        return (I_max - I_min) / (I_max + I_min)
+
+
+class Entanglement(BaseClass):
+    """
+    Bipartite entanglement measures.
+
+    Args:
+        rho: Density matrix
+        dim_A: Dimension of subsystem A
+        dim_B: Dimension of subsystem B
+    """
+
+    def __init__(self, rho: np.ndarray, dim_A: int = 2, dim_B: int = 2):
+        super().__init__()
+        self.rho = np.array(rho, dtype=complex)
+        self.dim_A = dim_A
+        self.dim_B = dim_B
+
+    def partial_trace_B(self) -> np.ndarray:
+        """Trace out subsystem B."""
+        rho_full = self.rho.reshape((self.dim_A, self.dim_B, self.dim_A, self.dim_B))
+        return np.trace(rho_full, axis1=1, axis2=3)
+
+    def entanglement_entropy(self) -> float:
+        """Calculate entanglement entropy."""
+        rho_A = self.partial_trace_B()
+        eigenvals = np.linalg.eigvalsh(rho_A)
+        eigenvals = eigenvals[eigenvals > 1e-15]
+        return -np.sum(eigenvals * np.log2(eigenvals))
+
+    def concurrence(self) -> float:
+        """Calculate concurrence for two qubits."""
+        if self.dim_A * self.dim_B != 4:
+            raise ValueError("Concurrence only for two qubits")
+        sigma_y = np.array([[0, -1j], [1j, 0]])
+        Y_Y = np.kron(sigma_y, sigma_y)
+        rho_tilde = Y_Y @ self.rho.conj() @ Y_Y
+        R = self.rho @ rho_tilde
+        eigenvals = np.sqrt(np.abs(np.linalg.eigvals(R)))
+        eigenvals = np.sort(eigenvals)[::-1]
+        return max(0, eigenvals[0] - eigenvals[1] - eigenvals[2] - eigenvals[3])
+
+    def negativity(self) -> float:
+        """Calculate negativity."""
+        rho_reshaped = self.rho.reshape((self.dim_A, self.dim_B, self.dim_A, self.dim_B))
+        rho_pt = rho_reshaped.transpose((2, 1, 0, 3)).reshape((self.dim_A * self.dim_B, -1))
+        eigenvals = np.linalg.eigvalsh(rho_pt)
+        return (np.sum(np.abs(eigenvals)) - 1) / 2
+
+
+class BellState(BaseClass):
+    """
+    Bell states and properties.
+    """
+
+    STATES = {
+        'phi_plus': np.array([1, 0, 0, 1]) / np.sqrt(2),
+        'phi_minus': np.array([1, 0, 0, -1]) / np.sqrt(2),
+        'psi_plus': np.array([0, 1, 1, 0]) / np.sqrt(2),
+        'psi_minus': np.array([0, 1, -1, 0]) / np.sqrt(2),
+    }
+
+    def __init__(self, name: str = 'phi_plus'):
+        super().__init__()
+        self.name = name
+        self._state = self.STATES[name].astype(complex)
+
+    def state_vector(self) -> np.ndarray:
+        """Return Bell state vector."""
+        return self._state.copy()
+
+    def density_matrix(self) -> np.ndarray:
+        """Return density matrix."""
+        return np.outer(self._state, self._state.conj())
+
+
+class BellInequality(BaseClass):
+    """
+    Bell inequality tests (CHSH).
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def correlation(self, rho: np.ndarray, theta_A: float, theta_B: float) -> float:
+        """Calculate E(a,b)."""
+        sigma_a = np.array([[np.cos(theta_A), np.sin(theta_A)],
+                           [np.sin(theta_A), -np.cos(theta_A)]])
+        sigma_b = np.array([[np.cos(theta_B), np.sin(theta_B)],
+                           [np.sin(theta_B), -np.cos(theta_B)]])
+        return np.real(np.trace(rho @ np.kron(sigma_a, sigma_b)))
+
+    def chsh_parameter(self, rho: np.ndarray,
+                      angles: Tuple = (0, np.pi/4, np.pi/2, 3*np.pi/4)) -> float:
+        """Calculate CHSH parameter S."""
+        a, a_p, b, b_p = angles
+        return (self.correlation(rho, a, b) - self.correlation(rho, a, b_p) +
+                self.correlation(rho, a_p, b) + self.correlation(rho, a_p, b_p))
+
+    def violates_bell(self, rho: np.ndarray) -> bool:
+        """Check if state violates Bell inequality."""
+        return abs(self.chsh_parameter(rho)) > 2
+
+
+class QuantumTeleportation(BaseClass):
+    """
+    Quantum teleportation protocol.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.corrections = {
+            (0, 0): np.eye(2),
+            (0, 1): np.array([[0, 1], [1, 0]]),
+            (1, 0): np.array([[1, 0], [0, -1]]),
+            (1, 1): np.array([[0, -1], [1, 0]]),
+        }
+
+    def teleport(self, psi_in: np.ndarray) -> np.ndarray:
+        """Perform teleportation (ideal)."""
+        outcome = tuple(np.random.randint(2, size=2))
+        return self.corrections[outcome] @ self.corrections[outcome] @ psi_in
+
+    def fidelity(self, psi_in: np.ndarray, psi_out: np.ndarray) -> float:
+        """Calculate fidelity."""
+        return np.abs(np.vdot(psi_in, psi_out))**2
+
+
+class QuantumZenoEffect(BaseClass):
+    """
+    Quantum Zeno effect.
+
+    Args:
+        H: System Hamiltonian
+        hbar: Reduced Planck constant
+    """
+
+    def __init__(self, H: np.ndarray, hbar: float = HBAR):
+        super().__init__()
+        self.H = np.array(H, dtype=complex)
+        self.hbar = hbar
+
+    def survival_probability(self, psi0: np.ndarray, t: float,
+                            n_measurements: int) -> float:
+        """Survival probability with n measurements."""
+        dt = t / n_measurements
+        U = la.expm(-1j * self.H * dt / self.hbar)
+        prob = 1.0
+        for _ in range(n_measurements):
+            psi = U @ psi0
+            prob *= np.abs(np.vdot(psi0, psi))**2
+        return prob
+
+    def survival_no_measurement(self, psi0: np.ndarray, t: float) -> float:
+        """Survival without measurements."""
+        U = la.expm(-1j * self.H * t / self.hbar)
+        psi_t = U @ psi0
+        return np.abs(np.vdot(psi0, psi_t))**2
