@@ -34,6 +34,7 @@ from .analytical_mechanics import *
 from .electromagnetism import *
 from .optics import *
 from .statistical_mechanics import *
+from .quantum_mechanics import *
 
 __all__ = [
     # Mechanics
@@ -106,4 +107,20 @@ __all__ = [
     # Non-equilibrium
     'BoltzmannEquation', 'LangevinDynamics', 'FokkerPlanckEquation',
     'FluctuationDissipation', 'JarzynskiEquality', 'CrooksRelation',
+    # Quantum Mechanics (Phase 5)
+    # Fundamental Operators
+    'PositionOperator', 'MomentumOperator', 'AngularMomentumOperator', 'HamiltonianOperator',
+    'CreationOperator', 'AnnihilationOperator', 'NumberOperator',
+    # Canonical Quantum Systems
+    'FiniteWell', 'DoubleWell', 'DeltaPotential', 'StepPotential', 'BarrierTunneling',
+    'CoulombPotential', 'HarmonicOscillator3D', 'MorsePotential',
+    # Angular Momentum
+    'OrbitalAngularMomentum', 'SpinAngularMomentum', 'SpinOrbitCoupling',
+    'ClebschGordan', 'WignerDMatrix', 'SphericalHarmonicsQM',
+    # Multi-particle Systems
+    'TwoParticleSystem', 'IdenticalBosons', 'IdenticalFermions', 'ExchangeInteraction',
+    # Approximation Methods
+    'TimeIndependentPerturbation', 'VariationalMethod', 'WKBApproximation',
+    # Open Quantum Systems
+    'DensityMatrix', 'VonNeumannEquation', 'LindbladMasterEquation',
 ]
