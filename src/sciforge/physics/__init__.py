@@ -27,21 +27,50 @@ from .circuits import *
 from .em_waves import *
 from .oscillations import *
 from .statistical import HermitePolynomial, RiceDistribution
+from .kinematics import *
+from .energy import *
+from .orbital import *
+from .analytical_mechanics import *
+from .electromagnetism import *
 
 __all__ = [
+    # Mechanics
     'Particle', 'Constraint', 'RotationalSpring',
+    'DynamicalSystem', 'PhysicalSystem', 'RotationalSystem',
+    # Fields
     'ElectricField', 'MagneticField', 'GravitationalField',
+    # Waves
     'Wave', 'WavePacket',
+    # Thermodynamics
     'ThermalSystem',
+    # Quantum
     'Wavefunction',
+    # Relativity
     'LorentzTransform',
+    # Fluids
     'FluidColumn',
-    'StrongFieldSystem',
-    'AttosecondPulseGenerator',
+    # Attosecond
+    'StrongFieldSystem', 'AttosecondPulseGenerator',
+    # Circuits
     'Circuit', 'CircuitElement', 'Resistor', 'Capacitor', 'Inductor',
+    # EM Waves
     'ElectromagneticWave',
+    # Oscillations
     'HarmonicOscillator', 'CoupledOscillator', 'ParametricOscillator',
-    'DynamicalSystem', 'PhysicalSystem',
-    'RotationalSystem',
-    'HermitePolynomial', 'RiceDistribution'
+    # Statistical
+    'HermitePolynomial', 'RiceDistribution',
+    # Kinematics (Phase 1.1)
+    'ProjectileMotion', 'CircularMotion', 'ReferenceFrame', 'RelativeMotion', 'CurvilinearMotion',
+    # Energy (Phase 1.3)
+    'WorkCalculator', 'PowerMeter', 'PotentialWell', 'EnergyLandscape', 'KineticEnergy', 'MechanicalEnergy',
+    # Orbital (Phase 1.4)
+    'OrbitalElements', 'KeplerianOrbit', 'TwoBodyProblem', 'ThreeBodyProblem', 'OrbitalManeuver', 'EscapeTrajectory',
+    # Analytical Mechanics (Phase 1.5)
+    'GeneralizedCoordinates', 'LagrangianSystem', 'HamiltonianSystem', 'PoissonBracket', 'ActionPrinciple', 'NoetherSymmetry',
+    # Electromagnetism (Phase 2)
+    'MaxwellSolver1D', 'MaxwellSolver2D', 'MaxwellSolver3D', 'GaussLaw', 'FaradayInduction', 'AmpereMaxwell',
+    'ScalarPotential', 'VectorPotential', 'GaugeFreedom', 'RetardedPotential',
+    'DipoleRadiation', 'LarmorFormula', 'SynchrotronRadiation', 'CherenkovRadiation', 'Bremsstrahlung', 'AntennaPattern',
+    'MultipoleExpansion', 'OctupoleField', 'SphericalHarmonics',
+    'DielectricMaterial', 'MagneticMaterial', 'ConductorSkin', 'PlasmaDispersion', 'MetamaterialUnit',
 ]
