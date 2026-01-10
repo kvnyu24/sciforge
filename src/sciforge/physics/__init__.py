@@ -48,8 +48,24 @@ __all__ = [
     'ThermalSystem',
     # Quantum
     'Wavefunction',
-    # Relativity
-    'LorentzTransform',
+    # Relativity (Phase 6)
+    # Special Relativity
+    'LorentzTransform', 'MinkowskiSpacetime', 'RelativisticParticle',
+    'FourVector', 'FourMomentum', 'FourVelocity', 'FourForce',
+    'ElectromagneticFieldTensor', 'StressEnergyTensor', 'CovariantMaxwell',
+    # General Relativity Foundations
+    'MetricTensor', 'ChristoffelSymbols', 'RiemannTensor', 'RicciTensor', 'RicciScalar',
+    'EinsteinTensor', 'GeodesicEquation',
+    # Exact Solutions
+    'SchwarzschildMetric', 'KerrMetric', 'ReissnerNordstromMetric', 'KerrNewmanMetric', 'FRWMetric',
+    # GR Phenomena
+    'GravitationalRedshift', 'PeriastronPrecession', 'GravitationalLensing',
+    'FrameDragging', 'EventHorizon', 'HawkingTemperature',
+    # Gravitational Waves
+    'LinearizedGravity', 'GravitationalWave', 'QuadrupoleFormula', 'ChirpMass', 'GWTemplate',
+    # Cosmology
+    'FriedmannEquations', 'HubbleParameter', 'CosmicScale', 'RedshiftDistance',
+    'DarkEnergy', 'InflationModel',
     # Fluids
     'FluidColumn',
     # Attosecond
