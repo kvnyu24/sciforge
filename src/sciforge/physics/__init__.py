@@ -39,6 +39,7 @@ from .qft import *
 from .condensed_matter import *
 from .amo import *
 from .plasma import *
+from .nuclear import *
 
 __all__ = [
     # Mechanics
@@ -194,4 +195,15 @@ __all__ = [
     # Astrophysics
     'HydrostaticStar', 'LaneEmden', 'StellarEvolution', 'WhiteDwarf', 'NeutronStar',
     'AccretionDisk', 'JetLaunching', 'Nucleosynthesis',
+    # Nuclear & Particle Physics (Phase 11)
+    # Scattering Theory
+    'PartialWave', 'ScatteringAmplitude', 'OpticalTheorem', 'RutherfordScattering', 'MottScattering',
+    # Nuclear Structure
+    'LiquidDropModel', 'ShellModel', 'WoodsSaxon', 'NuclearRadius', 'NuclearSpin',
+    # Radioactivity
+    'AlphaDecay', 'BetaDecay', 'GammaDecay', 'DecayChain', 'HalfLife',
+    # Nuclear Reactions
+    'NuclearCrossSection', 'QValue', 'ResonanceFormula', 'CompoundNucleus', 'FissionYield', 'FusionRate',
+    # Particle Physics
+    'DiracEquation', 'KleinGordonEquation', 'DiracSpinor', 'GammaMatrices', 'NeutrinoOscillation', 'QuarkModel',
 ]
