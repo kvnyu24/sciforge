@@ -33,6 +33,7 @@ from .orbital import *
 from .analytical_mechanics import *
 from .electromagnetism import *
 from .optics import *
+from .statistical_mechanics import *
 
 __all__ = [
     # Mechanics
@@ -88,4 +89,21 @@ __all__ = [
     'SecondHarmonicGeneration', 'KerrEffect', 'FourWaveMixing', 'SolitonPulse',
     # Acoustics
     'SoundWave', 'AcousticImpedance', 'DopplerShift', 'ResonantCavity', 'Ultrasound',
+    # Statistical Mechanics (Phase 4)
+    # Thermodynamic Laws
+    'ThermodynamicProcess', 'CarnotEngine', 'HeatPump', 'EntropyCalculator', 'FreeEnergyMinimizer',
+    # Thermodynamic Potentials
+    'InternalEnergy', 'Enthalpy', 'HelmholtzFree', 'GibbsFree', 'ChemicalPotential', 'MaxwellRelations',
+    # Equations of State
+    'VanDerWaalsGas', 'RedlichKwong', 'VirialExpansion', 'IdealMixture',
+    # Statistical Ensembles
+    'MicrocanonicalEnsemble', 'CanonicalEnsemble', 'GrandCanonicalEnsemble', 'PartitionFunction', 'EquipartitionTheorem',
+    # Quantum Statistics
+    'BoseEinsteinDistribution', 'FermiDiracDistribution', 'MaxwellBoltzmannDistribution',
+    'PhotonGas', 'PhononGas', 'DebyeModel', 'EinsteinModel',
+    # Phase Transitions
+    'IsingModel1D', 'IsingModel2D', 'LandauTheory', 'CriticalExponents',
+    # Non-equilibrium
+    'BoltzmannEquation', 'LangevinDynamics', 'FokkerPlanckEquation',
+    'FluctuationDissipation', 'JarzynskiEquality', 'CrooksRelation',
 ]
