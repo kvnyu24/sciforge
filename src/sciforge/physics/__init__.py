@@ -35,6 +35,7 @@ from .electromagnetism import *
 from .optics import *
 from .statistical_mechanics import *
 from .quantum_mechanics import *
+from .qft import *
 
 __all__ = [
     # Mechanics
@@ -139,4 +140,14 @@ __all__ = [
     'TimeIndependentPerturbation', 'VariationalMethod', 'WKBApproximation',
     # Open Quantum Systems
     'DensityMatrix', 'VonNeumannEquation', 'LindbladMasterEquation',
+    # QFT Foundations (Phase 7)
+    # Classical Field Theory
+    'ScalarField', 'VectorField', 'DiracField', 'FieldLagrangian', 'EulerLagrangeField',
+    # Canonical Quantization
+    'FieldCommutator', 'FockSpace', 'VacuumState', 'NormalOrdering', 'WickTheorem',
+    # Propagators & Diagrams
+    'FeynmanPropagator', 'FeynmanVertex', 'FeynmanDiagram', 'CrossSection', 'DecayRate',
+    # Symmetries
+    'GlobalSymmetry', 'LocalGaugeSymmetry', 'SpontaneousSymmetryBreaking',
+    'GoldstoneBoson', 'HiggsMechanism',
 ]
