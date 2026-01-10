@@ -8,3 +8,4 @@ from .interpolation import *
 from .optimization import *
 from .root_finding import *
 from .computational import *
+from .mathematical_physics import *

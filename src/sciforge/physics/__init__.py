@@ -41,6 +41,8 @@ from .amo import *
 from .plasma import *
 from .nuclear import *
 from .quantum_computing import *
+from .fluid_dynamics import *
+from .nonlinear_dynamics import *
 
 __all__ = [
     # Mechanics
@@ -226,4 +228,12 @@ __all__ = [
     'BitFlipCode', 'PhaseFlipCode', 'ShorCode', 'SteaneCode', 'SurfaceCode',
     # Entanglement
     'VonNeumannEntropy', 'Concurrence', 'Negativity', 'MutualInformation',
+    # Fluid Dynamics (Phase 14)
+    'StressTensor', 'StrainTensor', 'ContinuityEquation', 'NavierStokesSolver',
+    'EulerFluidSolver', 'ReynoldsNumber', 'VorticityField', 'StreamFunction',
+    'VelocityPotential', 'BoundaryLayer', 'TurbulenceModel', 'KolmogorovScale', 'EnergySpectrum',
+    # Nonlinear Dynamics & Chaos (Phase 15)
+    'FixedPointAnalysis', 'StabilityAnalysis', 'PhasePortrait', 'BifurcationDiagram',
+    'PoincareSection', 'LyapunovExponent', 'StrangeAttractor', 'FractalDimension',
+    'RecurrencePlot', 'LorenzSystem', 'RosslerSystem', 'HenonMap', 'LogisticMap', 'DoublePendulumChaos',
 ]
