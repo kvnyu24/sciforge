@@ -126,6 +126,7 @@ __all__ = [
     'PhotonGas', 'PhononGas', 'DebyeModel', 'EinsteinModel',
     # Phase Transitions
     'IsingModel1D', 'IsingModel2D', 'LandauTheory', 'CriticalExponents',
+    'XYModel', 'HeisenbergModel', 'CorrelationLength',
     # Non-equilibrium
     'BoltzmannEquation', 'LangevinDynamics', 'FokkerPlanckEquation',
     'FluctuationDissipation', 'JarzynskiEquality', 'CrooksRelation',
@@ -141,10 +142,17 @@ __all__ = [
     'ClebschGordan', 'WignerDMatrix', 'SphericalHarmonicsQM',
     # Multi-particle Systems
     'TwoParticleSystem', 'IdenticalBosons', 'IdenticalFermions', 'ExchangeInteraction',
+    'Helium', 'SecondQuantization',
     # Approximation Methods
     'TimeIndependentPerturbation', 'VariationalMethod', 'WKBApproximation',
+    'DegeneratePerturbation', 'TimeDependentPerturbation', 'BornApproximation',
+    'HartreeFock', 'DensityFunctional',
     # Open Quantum Systems
     'DensityMatrix', 'VonNeumannEquation', 'LindbladMasterEquation',
+    'QuantumChannel', 'Decoherence', 'QuantumMeasurement',
+    # Quantum Phenomena
+    'QuantumTunneling', 'QuantumInterference', 'Entanglement',
+    'BellState', 'BellInequality', 'QuantumTeleportation', 'QuantumZenoEffect',
     # QFT Foundations (Phase 7)
     # Classical Field Theory
     'ScalarField', 'VectorField', 'DiracField', 'FieldLagrangian', 'EulerLagrangeField',
