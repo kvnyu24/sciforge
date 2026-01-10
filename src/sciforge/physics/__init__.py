@@ -40,6 +40,7 @@ from .condensed_matter import *
 from .amo import *
 from .plasma import *
 from .nuclear import *
+from .quantum_computing import *
 
 __all__ = [
     # Mechanics
@@ -206,4 +207,15 @@ __all__ = [
     'NuclearCrossSection', 'QValue', 'ResonanceFormula', 'CompoundNucleus', 'FissionYield', 'FusionRate',
     # Particle Physics
     'DiracEquation', 'KleinGordonEquation', 'DiracSpinor', 'GammaMatrices', 'NeutrinoOscillation', 'QuarkModel',
+    # Quantum Information & Computing (Phase 13)
+    # Qubits & Gates
+    'Qubit', 'PauliGates', 'HadamardGate', 'PhaseGate', 'CNOTGate', 'ToffoliGate', 'UniversalGateSet',
+    # Circuits
+    'QuantumCircuit', 'CircuitSimulator', 'MeasurementBackend', 'DensityMatrixSimulator',
+    # Algorithms
+    'GroverSearch', 'DeutschJozsa', 'QuantumFourierTransform', 'PhaseEstimation', 'VQE',
+    # Error Correction
+    'BitFlipCode', 'PhaseFlipCode', 'ShorCode', 'SteaneCode', 'SurfaceCode',
+    # Entanglement
+    'VonNeumannEntropy', 'Concurrence', 'Negativity', 'MutualInformation',
 ]
