@@ -43,6 +43,10 @@ from .nuclear import *
 from .quantum_computing import *
 from .fluid_dynamics import *
 from .nonlinear_dynamics import *
+from .advanced_qft import *
+from .quantum_chaos import *
+from .network_physics import *
+from .frontier_physics import *
 
 __all__ = [
     # Mechanics
@@ -236,4 +240,18 @@ __all__ = [
     'FixedPointAnalysis', 'StabilityAnalysis', 'PhasePortrait', 'BifurcationDiagram',
     'PoincareSection', 'LyapunovExponent', 'StrangeAttractor', 'FractalDimension',
     'RecurrencePlot', 'LorenzSystem', 'RosslerSystem', 'HenonMap', 'LogisticMap', 'DoublePendulumChaos',
+    # Advanced QFT (Phase 17)
+    'RGFlow', 'BetaFunction', 'AnomalousDimension', 'FixedPointRG', 'CallanSymanzik',
+    'LatticeScalar', 'LatticeGauge', 'WilsonLoop', 'PlaquetteAction',
+    'ChiralAnomaly', 'Instanton', 'ThetaTerm', 'TopologicalCharge',
+    # Quantum Chaos & Random Matrices (Phase 18)
+    'GaussianEnsemble', 'WignerSurmise', 'MarchenkoPastur', 'TracyWidom',
+    'LevelStatistics', 'SpectralRigidity', 'ETHTest', 'OTOCorrelator', 'QuantumScars',
+    # Network & Percolation Physics (Phase 19)
+    'RandomGraph', 'SmallWorldNetwork', 'ScaleFreeNetwork', 'NetworkCentrality', 'CommunityDetection',
+    'SitePercolation', 'BondPercolation', 'PercolationThreshold', 'ClusterStatistics', 'CorrelationLengthPerc',
+    # Frontier Physics (Phase 20)
+    'ClassicalString', 'StringSpectrum', 'CompactDimension',
+    'AdSMetric', 'CFTCorrelator', 'HolographicEntropy',
+    'PlanckScale', 'BlackHoleEntropy', 'InformationParadox',
 ]
