@@ -188,9 +188,10 @@ def main():
 
     # Smooth periodogram for comparison
     from scipy.ndimage import uniform_filter1d
-    psd_smooth = uniform_filter1d(psd_per[positive], size=50)
+    positive_per = freq_per > 0
+    psd_smooth = uniform_filter1d(psd_per[positive_per], size=50)
 
-    ax.semilogy(freq_per[positive], psd_smooth, 'b-', lw=1, alpha=0.7,
+    ax.semilogy(freq_per[positive_per], psd_smooth, 'b-', lw=1, alpha=0.7,
                 label='Periodogram (smoothed)')
     ax.semilogy(freq_welch[freq_welch > 0], psd_welch[freq_welch > 0], 'r-', lw=1.5,
                 label='Welch')

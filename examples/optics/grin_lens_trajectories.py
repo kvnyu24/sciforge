@@ -485,7 +485,6 @@ def plot_grin_applications():
 
     n0 = 1.6
     g = 25.0
-    lens = GRINLens(n0, g, lens.pitch/4 if hasattr(lens, 'pitch') else 0.0628, 0.015)
     lens = GRINLens(n0, g, 2*np.pi/(4*g), 0.015)
 
     # Draw lens

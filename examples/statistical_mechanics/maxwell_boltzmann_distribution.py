@@ -178,7 +178,7 @@ def main():
     ax1.plot(v_range, pdf_theory, 'r-', lw=2, label='Maxwell-Boltzmann theory')
     ax1.axvline(v_p, color='green', linestyle='--', lw=1.5, label=f'$v_p$ = {v_p:.0f} m/s')
     ax1.axvline(v_mean, color='orange', linestyle='--', lw=1.5, label=f'$<v>$ = {v_mean:.0f} m/s')
-    ax1.axvline(v_rms, color='purple', linestyle='--', lw=1.5, label=f'$v_{rms}$ = {v_rms:.0f} m/s')
+    ax1.axvline(v_rms, color='purple', linestyle='--', lw=1.5, label=f'$v_{{rms}}$ = {v_rms:.0f} m/s')
     ax1.set_xlabel('Speed (m/s)', fontsize=12)
     ax1.set_ylabel('Probability Density', fontsize=12)
     ax1.set_title(f'Maxwell-Boltzmann Speed Distribution\nArgon at T = {T} K', fontsize=12)

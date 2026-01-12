@@ -444,7 +444,7 @@ def plot_interferometer_demonstration():
     # Simulated measurement with noise
     L_measured = np.linspace(0, 0.5, 50)  # 0 to 50 cm
     V_true = source.visibility(L_measured)
-    V_noisy = V_true + 0.02 * np.random.randn(len(V_measured))
+    V_noisy = V_true + 0.02 * np.random.randn(len(V_true))
     V_noisy = np.clip(V_noisy, 0, 1)
 
     ax4.plot(L_measured * 100, V_noisy, 'bo', markersize=6, label='Measured')

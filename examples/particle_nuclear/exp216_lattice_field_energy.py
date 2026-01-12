@@ -163,7 +163,8 @@ def main():
         for _ in range(n_steps):
             phi, pi = integrator(phi, pi, m, lam, dx, dt)
             E = sum(compute_energy(phi, pi, m, lam, dx))
-            E_total.append((E - E0) / E0)
+            rel_err = (E - E0) / E0 if np.isfinite(E) else np.nan
+            E_total.append(np.clip(rel_err, -0.5, 0.5))  # Clip for visualization
 
         t_array = np.arange(n_steps) * dt
         ax.plot(t_array, E_total, '-', color=color, lw=1.5, label=name)
@@ -270,45 +271,45 @@ Lattice Field Theory Energy Conservation
 ========================================
 
 Lattice Hamiltonian:
-  H = Σ_n [½π_n² + ½(φ_{n+1} - φ_n)²/a² + V(φ_n)] a
+  H = Sigma_i [pi_i^2/2 + (phi_i+1 - phi_i)^2/(2a^2) + V(phi_i)] a
 
 Potential:
-  V(φ) = ½m²φ² + (λ/4!)φ⁴
+  V(phi) = m^2*phi^2/2 + (lambda/4!)*phi^4
 
 Equations of Motion:
-  dφ_n/dt = π_n
-  dπ_n/dt = (φ_{n+1} - 2φ_n + φ_{n-1})/a² - dV/dφ
+  dphi_i/dt = pi_i
+  dpi_i/dt = (phi_i+1 - 2*phi_i + phi_i-1)/a^2 - dV/dphi
 
 Integrators:
 -----------
 1. Euler (1st order):
-   • NOT symplectic
-   • Energy drifts systematically
-   • Avoid for long simulations
+   - NOT symplectic
+   - Energy drifts systematically
+   - Avoid for long simulations
 
 2. Leapfrog (2nd order):
-   • Symplectic (preserves phase space)
-   • Energy bounded, oscillates
-   • Best for long-time behavior
+   - Symplectic (preserves phase space)
+   - Energy bounded, oscillates
+   - Best for long-time behavior
 
 3. RK4 (4th order):
-   • NOT symplectic
-   • High local accuracy
-   • Energy drifts over time
+   - NOT symplectic
+   - High local accuracy
+   - Energy drifts over time
 
 Symplectic Property:
-  Preserves: det(∂(q',p')/∂(q,p)) = 1
+  Preserves: det(d(q',p')/d(q,p)) = 1
   Bounded energy error for all time
 
 Lattice Parameters:
   Sites: {n_sites}
   Spacing: dx = {dx:.3f}
-  m = {m}, λ = {lam}
+  m = {m}, lambda = {lam}
   Initial E = {E0_val:.3f}
 
 Application:
-  • Lattice QCD uses similar methods
-  • Critical for Monte Carlo
+  - Lattice QCD uses similar methods
+  - Critical for Monte Carlo
 """
 
     ax.text(0.05, 0.95, summary, transform=ax.transAxes, fontsize=9,

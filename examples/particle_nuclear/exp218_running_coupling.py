@@ -176,7 +176,8 @@ def main():
     # Plot 4: Running α_QED
     ax = axes[1, 0]
 
-    mu_range_qed = np.logspace(-3, 17, 200)  # GeV
+    # QED running - limit range to avoid Landau pole overflow
+    mu_range_qed = np.logspace(-3, 5, 200)  # GeV (limited range)
 
     alpha_qed = alpha_qed_analytic(mu_range_qed)
 
@@ -186,17 +187,16 @@ def main():
     ax.axhline(y=1/128, color='gray', linestyle=':', alpha=0.5,
                label='α(M_Z) ≈ 1/128')
 
-    # Landau pole
-    mu_Landau = 0.511e-3 * np.exp(3 * np.pi / (2 * 1/137))
-    ax.axvline(x=mu_Landau, color='red', linestyle='--', alpha=0.5,
-               label=f'Landau pole')
+    # Landau pole - very far away, just note it exists
+    ax.text(0.95, 0.95, 'Landau pole at\n~10^285 GeV', transform=ax.transAxes,
+            fontsize=8, ha='right', va='top', color='red')
 
     ax.set_xlabel('Energy Scale μ (GeV)')
     ax.set_ylabel('α(μ)')
     ax.set_title('Running of QED Coupling\nα increases at high energy')
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
-    ax.set_ylim(0, 0.02)
+    ax.set_ylim(0, 0.015)
 
     # Plot 5: Coupling unification (schematic)
     ax = axes[1, 1]

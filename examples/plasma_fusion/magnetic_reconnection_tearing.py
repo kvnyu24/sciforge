@@ -31,14 +31,16 @@ def harris_current_sheet(x, y, L, B0):
     return Bx, By
 
 
-def tearing_mode_perturbation(x, y, L, delta, k, amplitude):
+def tearing_mode_perturbation(X, Y, L, delta, k, amplitude):
     """Add tearing mode perturbation to Harris sheet."""
     # Psi perturbation
-    psi = amplitude * np.exp(-(y / L)**2) * np.cos(k * x)
+    psi = amplitude * np.exp(-(Y / L)**2) * np.cos(k * X)
 
-    # Magnetic field from psi
-    delta_Bx = -np.gradient(psi, y, axis=0)
-    delta_By = np.gradient(psi, x, axis=1)
+    # Magnetic field from psi (use spacing from meshgrid)
+    dy = Y[1, 0] - Y[0, 0] if Y.ndim == 2 else Y[1] - Y[0]
+    dx = X[0, 1] - X[0, 0] if X.ndim == 2 else X[1] - X[0]
+    delta_Bx = -np.gradient(psi, dy, axis=0)
+    delta_By = np.gradient(psi, dx, axis=1)
 
     return delta_Bx, delta_By, psi
 
@@ -172,7 +174,7 @@ def main():
     ax4 = axes[1, 1]
 
     # Use actual reconnection model
-    reconnection = MagneticReconnection(B_in, L_scale, rho, eta=1e-4)
+    reconnection = MagneticReconnection(B_in, L_scale, rho, resistivity=1e-4)
 
     S = reconnection.lundquist_number
     rate_SP = reconnection.sweet_parker_rate()
